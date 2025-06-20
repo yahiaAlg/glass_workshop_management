@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-file-invoice me-2"></i>{{ title }}</h1>
+    <a href="{% url 'invoices:list' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Retour aux factures
+    </a>
+</div>
+
+<form method="post" id="invoice-form">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Invoice Header -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations Facture</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.customer.id_for_label }}" class="form-label">{{ form.customer.label }} *</label>
+                            {{ form.customer }}
+                            {% if form.customer.errors %}
+                                <div class="text-danger small">{{ form.customer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.due_date.id_for_label }}" class="form-label">{{ form.due_date.label }} *</label>
+                            {{ form.due_date }}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.payment_method.id_for_label }}" class="form-label">{{ form.payment_method.label }}</label>
+                            {{ form.payment_method }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.delivery_address.id_for_label }}" class="form-label">{{ form.delivery_address.label }}</label>
+                            {{ form.delivery_address }}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.delivery_date.id_for_label }}" class="form-label">{{ form.delivery_date.label }}</label>
+                            {{ form.delivery_date }}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.discount_amount.id_for_label }}" class="form-label">{{ form.discount_amount.label }}</label>
+                            <div class="input-group">
+                                {{ form.discount_amount }}
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Invoice Items -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Articles</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addInvoiceItem()">
+                        <i class="fas fa-plus me-1"></i>Ajouter un article
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="invoice-items">
+                        {{ item_formset.management_form }}
+                        {% for form in item_formset %}
+                            <div class="invoice-item border rounded p-3 mb-3">
+                                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">Produit</label>
+                                        {{ form.product }}
+                                    </div>
+                                    <div class="col-md-8 mb-2">
+                                        <label class="form-label">Description</label>
+                                        {{ form.description }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Quantité</label>
+                                        {{ form.quantity }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Prix unitaire</label>
+                                        {{ form.unit_price }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Largeur (cm)</label>
+                                        {{ form.width }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Hauteur (cm)</label>
+                                        {{ form.height }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Épaisseur</label>
+                                        {{ form.thickness }}
+                                    </div>
+                                    <div class="col-md-2 mb-2 d-flex align-items-end">
+                                        {% if form.DELETE %}
+                                            {{ form.DELETE }}
+                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeInvoiceItem(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Services -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Services</h5>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="addInvoiceService()">
+                        <i class="fas fa-plus me-1"></i>Ajouter un service
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="invoice-services">
+                        {{ service_formset.management_form }}
+                        {% for form in service_formset %}
+                            <div class="invoice-service border rounded p-3 mb-3">
+                                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Type de service</label>
+                                        {{ form.service_type }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Description</label>
+                                        {{ form.description }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Montant</label>
+                                        {{ form.amount }}
+                                    </div>
+                                    <div class="col-md-1 mb-2 d-flex align-items-end">
+                                        {% if form.DELETE %}
+                                            {{ form.DELETE }}
+                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeInvoiceService(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations Complémentaires</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.installation_notes.id_for_label }}" class="form-label">{{ form.installation_notes.label }}</label>
+                        {{ form.installation_notes }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.warranty_info.id_for_label }}" class="form-label">{{ form.warranty_info.label }}</label>
+                        {{ form.warranty_info }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                        {{ form.notes }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Invoice Summary -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Résumé Facture</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td>Sous-total:</td>
+                            <td class="text-end" id="subtotal">0.00€</td>
+                        </tr>
+                        <tr>
+                            <td>Services:</td>
+                            <td class="text-end" id="services-total">0.00€</td>
+                        </tr>
+                        <tr>
+                            <td>Remise:</td>
+                            <td class="text-end" id="discount">0.00€</td>
+                        </tr>
+                        <tr>
+                            <td>TVA (19%):</td>
+                            <td class="text-end" id="tax">0.00€</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td><strong>Total:</strong></td>
+                            <td class="text-end"><strong id="total">0.00€</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>{% if "Nouvelle" in title %}Créer la facture{% else %}Modifier la facture{% endif %}
+                        </button>
+                        <a href="{% url 'invoices:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Annuler
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+let itemFormCount = {{ item_formset.total_form_count }};
+let serviceFormCount = {{ service_formset.total_form_count }};
+
+function addInvoiceItem() {
+    const container = document.getElementById('invoice-items');
+    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+    
+    const newForm = `
+        <div class="invoice-item border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label class="form-label">Produit</label>
+                    <select name="items-${itemFormCount}-product" class="form-select" id="id_items-${itemFormCount}-product">
+                        <option value="">---------</option>
+                        {% for product in item_formset.form.product.field.queryset %}
+                        <option value="{{ product.pk }}">{{ product.name }} - {{ product.selling_price }}€</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-8 mb-2">
+                    <label class="form-label">Description</label>
+                    <input type="text" name="items-${itemFormCount}-description" class="form-control" id="id_items-${itemFormCount}-description">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Quantité</label>
+                    <input type="number" name="items-${itemFormCount}-quantity" step="0.01" class="form-control" id="id_items-${itemFormCount}-quantity">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Prix unitaire</label>
+                    <input type="number" name="items-${itemFormCount}-unit_price" step="0.01" class="form-control" id="id_items-${itemFormCount}-unit_price">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Largeur (cm)</label>
+                    <input type="number" name="items-${itemFormCount}-width" step="0.01" class="form-control" id="id_items-${itemFormCount}-width">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Hauteur (cm)</label>
+                    <input type="number" name="items-${itemFormCount}-height" step="0.01" class="form-control" id="id_items-${itemFormCount}-height">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Épaisseur</label>
+                    <input type="text" name="items-${itemFormCount}-thickness" class="form-control" id="id_items-${itemFormCount}-thickness">
+                </div>
+                <div class="col-md-2 mb-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeInvoiceItem(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', newForm);
+    itemFormCount++;
+    totalForms.value = itemFormCount;
+}
+
+function removeInvoiceItem(button) {
+    const item = button.closest('.invoice-item');
+    const deleteInput = item.querySelector('input[name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.checked = true;
+        item.style.display = 'none';
+    } else {
+        item.remove();
+        itemFormCount--;
+        document.getElementById('id_items-TOTAL_FORMS').value = itemFormCount;
+    }
+}
+
+function addInvoiceService() {
+    const container = document.getElementById('invoice-services');
+    const totalForms = document.getElementById('id_services-TOTAL_FORMS');
+    
+    const newForm = `
+        <div class="invoice-service border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Type de service</label>
+                    <select name="services-${serviceFormCount}-service_type" class="form-select" id="id_services-${serviceFormCount}-service_type">
+                        <option value="delivery">Livraison</option>
+                        <option value="installation">Installation</option>
+                        <option value="cutting">Découpe</option>
+                        <option value="packaging">Emballage</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <label class="form-label">Description</label>
+                    <input type="text" name="services-${serviceFormCount}-description" class="form-control" id="id_services-${serviceFormCount}-description">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Montant</label>
+                    <input type="number" name="services-${serviceFormCount}-amount" step="0.01" class="form-control" id="id_services-${serviceFormCount}-amount">
+                </div>
+                <div class="col-md-1 mb-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeInvoiceService(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', newForm);
+    serviceFormCount++;
+    totalForms.value = serviceFormCount;
+}
+
+function removeInvoiceService(button) {
+    const service = button.closest('.invoice-service');
+    const deleteInput = service.querySelector('input[name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.checked = true;
+        service.style.display = 'none';
+    } else {
+        service.remove();
+        serviceFormCount--;
+        document.getElementById('id_services-TOTAL_FORMS').value = serviceFormCount;
+    }
+}
+
+// Auto-fill product details when product is selected
+document.addEventListener('change', function(e) {
+    if (e.target.name && e.target.name.includes('-product')) {
+        const productSelect = e.target;
+        const itemContainer = productSelect.closest('.invoice-item');
+        const descriptionInput = itemContainer.querySelector('input[name$="-description"]');
+        const priceInput = itemContainer.querySelector('input[name$="-unit_price"]');
+        
+        if (productSelect.value) {
+            // Get product details from the selected option text
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const optionText = selectedOption.text;
+            const price = optionText.split(' - ')[1]?.replace('€', '');
+            
+            if (price) {
+                priceInput.value = price;
+            }
+            
+            if (!descriptionInput.value) {
+                descriptionInput.value = optionText.split(' - ')[0];
+            }
+        }
+    }
+});
+
+// Calculate totals
+function calculateTotals() {
+    let subtotal = 0;
+    let servicesTotal = 0;
+    
+    // Calculate items subtotal
+    document.querySelectorAll('.invoice-item:not([style*="display: none"])').forEach(item => {
+        const quantity = parseFloat(item.querySelector('input[name$="-quantity"]')?.value || 0);
+        const price = parseFloat(item.querySelector('input[name$="-unit_price"]')?.value || 0);
+        subtotal += quantity * price;
+    });
+    
+    // Calculate services total
+    document.querySelectorAll('.invoice-service:not([style*="display: none"])').forEach(service => {
+        const amount = parseFloat(service.querySelector('input[name$="-amount"]')?.value || 0);
+        servicesTotal += amount;
+    });
+    
+    const discount = parseFloat(document.getElementById('{{ form.discount_amount.id_for_label }}')?.value || 0);
+    const taxableAmount = subtotal + servicesTotal - discount;
+    const tax = taxableAmount * 0.19;
+    const total = taxableAmount + tax;
+    
+    document.getElementById('subtotal').textContent = subtotal.toFixed(2) + '€';
+    document.getElementById('services-total').textContent = servicesTotal.toFixed(2) + '€';
+    document.getElementById('discount').textContent = discount.toFixed(2) + '€';
+    document.getElementById('tax').textContent = tax.toFixed(2) + '€';
+    document.getElementById('total').textContent = total.toFixed(2) + '€';
+}
+
+// Recalculate on input changes
+document.addEventListener('input', function(e) {
+    if (e.target.type === 'number') {
+        calculateTotals();
+    }
+});
+
+// Initial calculation
+document.addEventListener('DOMContentLoaded', calculateTotals);
+</script>
+{% endblock %}

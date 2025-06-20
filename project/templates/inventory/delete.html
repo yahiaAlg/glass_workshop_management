@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer Produit - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-trash me-2 text-danger"></i>Supprimer Produit</h1>
+    <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Confirmation de suppression</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Attention!</strong> Cette action est irréversible. La suppression du produit peut affecter les commandes et factures existantes.
+                </div>
+                
+                <p>Êtes-vous sûr de vouloir supprimer le produit suivant ?</p>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                            {% endif %}
+                            <div>
+                                <h6><strong>{{ product.name }}</strong></h6>
+                                <p class="mb-1">Code: {{ product.code }}</p>
+                                <p class="mb-1">Type: {{ product.get_glass_type_display }}</p>
+                                <p class="mb-0">Stock: {{ product.stock_quantity|floatformat:1 }} {{ product.get_unit_display }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary me-2">Annuler</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Confirmer la suppression
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

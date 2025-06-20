@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de Bord - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-tachometer-alt me-2"></i>Tableau de Bord</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'invoices:create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Nouvelle Facture
+            </a>
+            <a href="{% url 'orders:create' %}" class="btn btn-outline-primary">
+                <i class="fas fa-clipboard-list me-1"></i>Nouvelle Commande
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-euro-sign fa-2x mb-2"></i>
+                <h3>{{ today_sales|floatformat:2 }}€</h3>
+                <p class="mb-0">Ventes du jour</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card success">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                <h3>{{ month_revenue|floatformat:2 }}€</h3>
+                <p class="mb-0">Chiffre d'affaires du mois</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card warning">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h3>{{ total_customers }}</h3>
+                <p class="mb-0">Clients actifs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card metric-card {% if low_stock_count > 0 %}danger{% endif %}">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <h3>{{ low_stock_count }}</h3>
+                <p class="mb-0">Alertes stock</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Commandes en attente</h6>
+                        <h4 class="text-warning">{{ pending_orders }}</h4>
+                    </div>
+                    <i class="fas fa-clock fa-2x text-warning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Factures impayées</h6>
+                        <h4 class="text-danger">{{ outstanding_invoices }}</h4>
+                    </div>
+                    <i class="fas fa-file-invoice-dollar fa-2x text-danger"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted">Types de clients</h6>
+                        <small class="text-muted">
+                            Particuliers: {{ customer_distribution.individual }}<br>
+                            Entreprises: {{ customer_distribution.commercial }}
+                        </small>
+                    </div>
+                    <i class="fas fa-chart-pie fa-2x text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Évolution des ventes (7 derniers jours)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-doughnut me-2"></i>Méthodes de paiement</h5>
+            </div>
+            <div class="card-body">
+                {% if payment_methods %}
+                    <canvas id="paymentChart" height="200"></canvas>
+                {% else %}
+                    <p class="text-muted text-center">Aucune donnée disponible</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="fas fa-file-invoice me-2"></i>Factures récentes</h5>
+                <a href="{% url 'invoices:list' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                {% if recent_invoices %}
+                    <div class="list-group list-group-flush">
+                        {% for invoice in recent_invoices %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <strong>{{ invoice.invoice_number }}</strong><br>
+                                    <small class="text-muted">{{ invoice.customer.name }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{% if invoice.status == 'paid' %}success{% elif invoice.status == 'overdue' %}danger{% else %}warning{% endif %}">
+                                        {{ invoice.get_status_display }}
+                                    </span><br>
+                                    <small class="text-muted">{{ invoice.total_amount|floatformat:2 }}€</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucune facture récente</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Stock faible</h5>
+                <a href="{% url 'inventory:low_stock' %}" class="btn btn-sm btn-outline-warning">Voir tout</a>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                    <div class="list-group list-group-flush">
+                        {% for product in low_stock_products %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <strong>{{ product.name }}</strong><br>
+                                    <small class="text-muted">{{ product.code }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-warning text-dark">{{ product.stock_quantity|floatformat:1 }}</span><br>
+                                    <small class="text-muted">Min: {{ product.minimum_stock|floatformat:1 }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucun produit en stock faible</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sales Chart
+const salesCtx = document.getElementById('salesChart').getContext('2d');
+new Chart(salesCtx, {
+    type: 'line',
+    data: {
+        labels: {{ sales_chart_data.labels|safe }},
+        datasets: [{
+            label: 'Ventes (€)',
+            data: {{ sales_chart_data.data|safe }},
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value + '€';
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Payment Methods Chart
+{% if payment_methods %}
+const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+new Chart(paymentCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for method in payment_methods %}'{{ method.method }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for method in payment_methods %}{{ method.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                '#2563eb',
+                '#059669',
+                '#d97706',
+                '#dc2626',
+                '#7c3aed'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

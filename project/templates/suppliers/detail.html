@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ supplier.name }} - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-truck me-2"></i>{{ supplier.name }}</h1>
+    <div class="btn-toolbar">
+        <div class="btn-group me-2">
+            <a href="{% url 'suppliers:edit' supplier.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </a>
+        </div>
+        <a href="{% url 'suppliers:list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Informations Fournisseur</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Nom:</strong></td>
+                                <td>{{ supplier.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Contact:</strong></td>
+                                <td>{{ supplier.contact_person }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Téléphone:</strong></td>
+                                <td>{{ supplier.phone }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ supplier.email|default:"-" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Statut:</strong></td>
+                                <td>
+                                    <span class="badge bg-{% if supplier.status == 'active' %}success{% else %}secondary{% endif %}">
+                                        {{ supplier.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Conditions paiement:</strong></td>
+                                <td>{{ supplier.payment_terms }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Dernière commande:</strong></td>
+                                <td>
+                                    {% if supplier.last_order_date %}
+                                        {{ supplier.last_order_date|date:"d/m/Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Aucune</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Créé le:</strong></td>
+                                <td>{{ supplier.created_at|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <strong>Adresse:</strong>
+                    <p class="mt-1">{{ supplier.address|linebreaks }}</p>
+                </div>
+                
+                {% if supplier.notes %}
+                <div class="mt-3">
+                    <strong>Notes:</strong>
+                    <p class="mt-1">{{ supplier.notes|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Contact Rapide</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="tel:{{ supplier.phone }}" class="btn btn-outline-success">
+                        <i class="fas fa-phone me-1"></i>Appeler {{ supplier.phone }}
+                    </a>
+                    {% if supplier.email %}
+                        <a href="mailto:{{ supplier.email }}" class="btn btn-outline-primary">
+                            <i class="fas fa-envelope me-1"></i>Envoyer un email
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Produits Fournis</h5>
+            </div>
+            <div class="card-body">
+                {% with products=supplier.glassproduct_set.all %}
+                    {% if products %}
+                        <div class="list-group list-group-flush">
+                            {% for product in products|slice:":5" %}
+                                <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ product.name }}</strong><br>
+                                        <small class="text-muted">{{ product.code }}</small>
+                                    </div>
+                                    <span class="badge bg-info">{{ product.stock_quantity|floatformat:1 }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if products.count > 5 %}
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Et {{ products.count|add:"-5" }} autres produits...</small>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">Aucun produit associé à ce fournisseur.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Actions Rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'inventory:create' %}?supplier={{ supplier.pk }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-1"></i>Ajouter un produit
+                    </a>
+                    <a href="{% url 'inventory:list' %}?supplier={{ supplier.pk }}" class="btn btn-outline-info">
+                        <i class="fas fa-boxes me-1"></i>Voir tous les produits
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

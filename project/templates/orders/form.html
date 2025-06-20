@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-clipboard-list me-2"></i>{{ title }}</h1>
+    <a href="{% url 'orders:list' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Retour aux commandes
+    </a>
+</div>
+
+<form method="post" id="order-form">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Order Header -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations Commande</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.customer.id_for_label }}" class="form-label">{{ form.customer.label }} *</label>
+                            {{ form.customer }}
+                            {% if form.customer.errors %}
+                                <div class="text-danger small">{{ form.customer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.delivery_date.id_for_label }}" class="form-label">{{ form.delivery_date.label }}</label>
+                            {{ form.delivery_date }}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="{{ form.delivery_address.id_for_label }}" class="form-label">{{ form.delivery_address.label }}</label>
+                            {{ form.delivery_address }}
+                            <div class="form-text">Laissez vide pour utiliser l'adresse du client</div>
+                        </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-center">
+                            <div class="form-check">
+                                {{ form.installation_required }}
+                                <label class="form-check-label" for="{{ form.installation_required.id_for_label }}">
+                                    {{ form.installation_required.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                        {{ form.notes }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Articles de la Commande</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOrderItem()">
+                        <i class="fas fa-plus me-1"></i>Ajouter un article
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="order-items">
+                        {{ formset.management_form }}
+                        {% for form in formset %}
+                            <div class="order-item border rounded p-3 mb-3">
+                                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <div class="row">
+                                    <div class="col-md-5 mb-2">
+                                        <label class="form-label">Produit</label>
+                                        {{ form.product }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Quantité</label>
+                                        {{ form.quantity }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Prix unitaire</label>
+                                        {{ form.unit_price }}
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Sous-total</label>
+                                        <input type="text" class="form-control subtotal-display" readonly>
+                                    </div>
+                                    <div class="col-md-1 mb-2 d-flex align-items-end">
+                                        {% if form.DELETE %}
+                                            {{ form.DELETE }}
+                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeOrderItem(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-11 mb-2">
+                                        <label class="form-label">Notes</label>
+                                        {{ form.notes }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Order Summary -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Résumé Commande</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td>Total articles:</td>
+                            <td class="text-end" id="total-items">0</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td><strong>Total:</strong></td>
+                            <td class="text-end"><strong id="total-amount">0.00€</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>{% if "Nouvelle" in title %}Créer la commande{% else %}Modifier la commande{% endif %}
+                        </button>
+                        <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Annuler
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+let itemFormCount = {{ formset.total_form_count }};
+
+function addOrderItem() {
+    const container = document.getElementById('order-items');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    
+    const newForm = `
+        <div class="order-item border rounded p-3 mb-3">
+            <div class="row">
+                <div class="col-md-5 mb-2">
+                    <label class="form-label">Produit</label>
+                    <select name="form-${itemFormCount}-product" class="form-select" id="id_form-${itemFormCount}-product">
+                        <option value="">---------</option>
+                        {% for product in formset.form.product.field.queryset %}
+                        <option value="{{ product.pk }}">{{ product.name }} - {{ product.selling_price }}€</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Quantité</label>
+                    <input type="number" name="form-${itemFormCount}-quantity" step="0.01" class="form-control" id="id_form-${itemFormCount}-quantity">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Prix unitaire</label>
+                    <input type="number" name="form-${itemFormCount}-unit_price" step="0.01" class="form-control" id="id_form-${itemFormCount}-unit_price">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Sous-total</label>
+                    <input type="text" class="form-control subtotal-display" readonly>
+                </div>
+                <div class="col-md-1 mb-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeOrderItem(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-11 mb-2">
+                    <label class="form-label">Notes</label>
+                    <input type="text" name="form-${itemFormCount}-notes" class="form-control" id="id_form-${itemFormCount}-notes">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', newForm);
+    itemFormCount++;
+    totalForms.value = itemFormCount;
+    calculateTotals();
+}
+
+function removeOrderItem(button) {
+    const item = button.closest('.order-item');
+    const deleteInput = item.querySelector('input[name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.checked = true;
+        item.style.display = 'none';
+    } else {
+        item.remove();
+        itemFormCount--;
+        document.getElementById('id_form-TOTAL_FORMS').value = itemFormCount;
+    }
+    calculateTotals();
+}
+
+// Auto-fill product details when product is selected
+document.addEventListener('change', function(e) {
+    if (e.target.name && e.target.name.includes('-product')) {
+        const productSelect = e.target;
+        const itemContainer = productSelect.closest('.order-item');
+        const priceInput = itemContainer.querySelector('input[name$="-unit_price"]');
+        
+        if (productSelect.value) {
+            // Get product price from the selected option text
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const optionText = selectedOption.text;
+            const price = optionText.split(' - ')[1]?.replace('€', '');
+            
+            if (price) {
+                priceInput.value = price;
+            }
+        }
+        calculateItemSubtotal(itemContainer);
+    }
+});
+
+// Calculate item subtotal
+function calculateItemSubtotal(itemContainer) {
+    const quantity = parseFloat(itemContainer.querySelector('input[name$="-quantity"]')?.value || 0);
+    const price = parseFloat(itemContainer.querySelector('input[name$="-unit_price"]')?.value || 0);
+    const subtotal = quantity * price;
+    
+    const subtotalDisplay = itemContainer.querySelector('.subtotal-display');
+    subtotalDisplay.value = subtotal.toFixed(2) + '€';
+    
+    calculateTotals();
+}
+
+// Calculate totals
+function calculateTotals() {
+    let totalAmount = 0;
+    let totalItems = 0;
+    
+    document.querySelectorAll('.order-item:not([style*="display: none"])').forEach(item => {
+        const quantity = parseFloat(item.querySelector('input[name$="-quantity"]')?.value || 0);
+        const price = parseFloat(item.querySelector('input[name$="-unit_price"]')?.value || 0);
+        const subtotal = quantity * price;
+        
+        if (!isNaN(subtotal)) {
+            totalAmount += subtotal;
+            totalItems += quantity;
+        }
+    });
+    
+    document.getElementById('total-items').textContent = totalItems.toFixed(1);
+    document.getElementById('total-amount').textContent = totalAmount.toFixed(2) + '€';
+}
+
+// Recalculate on input changes
+document.addEventListener('input', function(e) {
+    if (e.target.type === 'number' && (e.target.name.includes('-quantity') || e.target.name.includes('-unit_price'))) {
+        const itemContainer = e.target.closest('.order-item');
+        calculateItemSubtotal(itemContainer);
+    }
+});
+
+// Initial calculation
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.order-item').forEach(item => {
+        calculateItemSubtotal(item);
+    });
+});
+</script>
+{% endblock %}

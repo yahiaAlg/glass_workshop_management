@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventaire - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-boxes me-2"></i>Gestion de l'Inventaire</h1>
+    <a href="{% url 'inventory:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Nouveau Produit
+    </a>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" name="search" placeholder="Rechercher un produit..." {% if search %}value="{{ search }}"{% endif %}>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="low_stock" id="lowStockFilter" {% if low_stock %}checked{% endif %}>
+                    <label class="form-check-label" for="lowStockFilter">
+                        <i class="fas fa-exclamation-triangle text-warning me-1"></i>Stock faible uniquement
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
+                {% if search or low_stock %}
+                    <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">Effacer</a>
+                {% endif %}
+                <a href="{% url 'inventory:low_stock' %}" class="btn btn-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Alertes Stock
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Produits en Verre ({{ products.paginator.count }} au total)</h5>
+    </div>
+    <div class="card-body">
+        {% if products %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Produit</th>
+                            <th>Type</th>
+                            <th>Épaisseur</th>
+                            <th>Stock</th>
+                            <th>Prix de vente</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                            <tr class="{% if product.is_low_stock %}table-warning{% endif %}">
+                                <td><strong>{{ product.code }}</strong></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if product.image %}
+                                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        {% else %}
+                                            <div class="me-2 bg-light border rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-image text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ product.name }}</strong>
+                                            {% if product.color != 'clear' %}
+                                                <br><small class="text-muted">{{ product.get_color_display }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ product.get_glass_type_display }}</span>
+                                </td>
+                                <td>{{ product.get_thickness_display }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="{% if product.is_low_stock %}text-warning fw-bold{% endif %}">
+                                            {{ product.stock_quantity|floatformat:1 }}
+                                        </span>
+                                        <small class="text-muted ms-1">{{ product.get_unit_display }}</small>
+                                        {% if product.is_low_stock %}
+                                            <i class="fas fa-exclamation-triangle text-warning ms-1" title="Stock faible"></i>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">Min: {{ product.minimum_stock|floatformat:1 }}</small>
+                                </td>
+                                <td><strong>{{ product.selling_price|floatformat:2 }}€</strong></td>
+                                <td>
+                                    <span class="badge bg-{% if product.status == 'active' %}success{% else %}secondary{% endif %}">
+                                        {{ product.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'inventory:detail' product.pk %}" class="btn btn-outline-info" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'inventory:edit' product.pk %}" class="btn btn-outline-primary" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if user.is_admin %}
+                                            <a href="{% url 'inventory:delete' product.pk %}" class="btn btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if products.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if products.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">Précédent</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in products.paginator.page_range %}
+                            {% if products.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if products.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">Suivant</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun produit trouvé</h5>
+                <p class="text-muted">
+                    {% if search %}
+                        Aucun produit ne correspond à votre recherche.
+                    {% else %}
+                        Commencez par ajouter votre premier produit en verre.
+                    {% endif %}
+                </p>
+                <a href="{% url 'inventory:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Nouveau Produit
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ invoice.invoice_number }} - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-file-invoice me-2"></i>Facture {{ invoice.invoice_number }}</h1>
+    <div class="btn-toolbar">
+        <div class="btn-group me-2">
+            <a href="{% url 'invoices:print' invoice.pk %}" class="btn btn-success" target="_blank">
+                <i class="fas fa-print me-1"></i>Imprimer
+            </a>
+            {% if invoice.status != 'paid' %}
+                <a href="{% url 'invoices:edit' invoice.pk %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i>Modifier
+                </a>
+                <a href="{% url 'invoices:add_payment' invoice.pk %}" class="btn btn-warning">
+                    <i class="fas fa-euro-sign me-1"></i>Ajouter Paiement
+                </a>
+            {% endif %}
+        </div>
+        <a href="{% url 'invoices:list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Invoice Header -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Informations Facture</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Numéro:</strong></td>
+                                <td>{{ invoice.invoice_number }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Date:</strong></td>
+                                <td>{{ invoice.invoice_date|date:"d/m/Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Échéance:</strong></td>
+                                <td>{{ invoice.due_date|date:"d/m/Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mode de paiement:</strong></td>
+                                <td>{{ invoice.get_payment_method_display }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Client:</strong></td>
+                                <td>
+                                    <a href="{% url 'customers:detail' invoice.customer.pk %}" class="text-decoration-none">
+                                        {{ invoice.customer.name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Statut:</strong></td>
+                                <td>
+                                    <span class="badge bg-{% if invoice.status == 'paid' %}success{% elif invoice.status == 'overdue' %}danger{% elif invoice.status == 'sent' %}warning{% elif invoice.status == 'cancelled' %}secondary{% else %}info{% endif %}">
+                                        {{ invoice.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Créée par:</strong></td>
+                                <td>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Créée le:</strong></td>
+                                <td>{{ invoice.created_at|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if invoice.delivery_address %}
+                <div class="mt-3">
+                    <strong>Adresse de livraison:</strong>
+                    <p class="mt-1">{{ invoice.delivery_address|linebreaks }}</p>
+                    {% if invoice.delivery_date %}
+                        <strong>Date de livraison:</strong> {{ invoice.delivery_date|date:"d/m/Y" }}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Invoice Items -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Articles</h5>
+            </div>
+            <div class="card-body">
+                {% if items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Description</th>
+                                    <th class="text-center">Quantité</th>
+                                    <th class="text-end">Prix unitaire</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong><br>
+                                        <small class="text-muted">{{ item.product.code }}</small>
+                                    </td>
+                                    <td>
+                                        {{ item.description }}
+                                        {% if item.width and item.height %}
+                                            <br><small class="text-muted">{{ item.width }}cm x {{ item.height }}cm</small>
+                                        {% endif %}
+                                        {% if item.thickness %}
+                                            <br><small class="text-muted">Épaisseur: {{ item.thickness }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ item.quantity|floatformat:1 }}</td>
+                                    <td class="text-end">{{ item.unit_price|floatformat:2 }}€</td>
+                                    <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}€</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucun article dans cette facture.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Services -->
+        {% if services %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Services</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Service</th>
+                                <th>Description</th>
+                                <th class="text-end">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for service in services %}
+                            <tr>
+                                <td><strong>{{ service.get_service_type_display }}</strong></td>
+                                <td>{{ service.description }}</td>
+                                <td class="text-end"><strong>{{ service.amount|floatformat:2 }}€</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Additional Information -->
+        {% if invoice.installation_notes or invoice.warranty_info or invoice.notes %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Informations Complémentaires</h5>
+            </div>
+            <div class="card-body">
+                {% if invoice.installation_notes %}
+                <div class="mb-3">
+                    <h6><strong>Notes d'installation:</strong></h6>
+                    <p>{{ invoice.installation_notes|linebreaks }}</p>
+                </div>
+                {% endif %}
+                
+                {% if invoice.warranty_info %}
+                <div class="mb-3">
+                    <h6><strong>Informations de garantie:</strong></h6>
+                    <p>{{ invoice.warranty_info|linebreaks }}</p>
+                </div>
+                {% endif %}
+                
+                {% if invoice.notes %}
+                <div class="mb-3">
+                    <h6><strong>Notes:</strong></h6>
+                    <p>{{ invoice.notes|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Invoice Summary -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Résumé Financier</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td>Sous-total:</td>
+                        <td class="text-end">{{ invoice.subtotal|floatformat:2 }}€</td>
+                    </tr>
+                    {% if invoice.services_total > 0 %}
+                    <tr>
+                        <td>Services:</td>
+                        <td class="text-end">{{ invoice.services_total|floatformat:2 }}€</td>
+                    </tr>
+                    {% endif %}
+                    {% if invoice.discount_amount > 0 %}
+                    <tr>
+                        <td>Remise:</td>
+                        <td class="text-end text-success">-{{ invoice.discount_amount|floatformat:2 }}€</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>TVA (19%):</td>
+                        <td class="text-end">{{ invoice.tax_amount|floatformat:2 }}€</td>
+                    </tr>
+                    <tr class="border-top">
+                        <td><strong>Total:</strong></td>
+                        <td class="text-end"><strong class="text-primary fs-5">{{ invoice.total_amount|floatformat:2 }}€</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Payment History -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Historique des Paiements</h5>
+                {% if invoice.status != 'paid' %}
+                    <a href="{% url 'invoices:add_payment' invoice.pk %}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-plus me-1"></i>Ajouter
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                    {% for payment in payments %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                        <div>
+                            <strong>{{ payment.amount|floatformat:2 }}€</strong><br>
+                            <small class="text-muted">{{ payment.payment_date|date:"d/m/Y" }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{% if payment.status == 'completed' %}success{% elif payment.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                {{ payment.get_status_display }}
+                            </span><br>
+                            <small class="text-muted">{{ payment.get_payment_method_display }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% with total_paid=payments|length %}
+                    {% if total_paid > 0 %}
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Total payé:</strong>
+                        <strong class="text-success">
+                            {% for payment in payments %}
+                                {% if payment.status == 'completed' %}{{ payment.amount|add:0 }}{% endif %}
+                            {% endfor %}€
+                        </strong>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                {% else %}
+                    <p class="text-muted text-center">Aucun paiement enregistré</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Actions Rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'invoices:print' invoice.pk %}" class="btn btn-outline-success" target="_blank">
+                        <i class="fas fa-print me-1"></i>Imprimer la facture
+                    </a>
+                    {% if invoice.status != 'paid' %}
+                        <a href="{% url 'invoices:add_payment' invoice.pk %}" class="btn btn-outline-warning">
+                            <i class="fas fa-euro-sign me-1"></i>Enregistrer un paiement
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'customers:detail' invoice.customer.pk %}" class="btn btn-outline-info">
+                        <i class="fas fa-user me-1"></i>Voir le client
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

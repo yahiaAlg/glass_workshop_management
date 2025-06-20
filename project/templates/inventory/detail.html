@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-box me-2"></i>{{ product.name }}</h1>
+    <div class="btn-toolbar">
+        <div class="btn-group me-2">
+            <a href="{% url 'inventory:edit' product.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </a>
+        </div>
+        <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Détails du Produit</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Code produit:</strong></td>
+                                <td>{{ product.code }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Nom:</strong></td>
+                                <td>{{ product.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Type de verre:</strong></td>
+                                <td><span class="badge bg-info">{{ product.get_glass_type_display }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Épaisseur:</strong></td>
+                                <td>{{ product.get_thickness_display }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Couleur:</strong></td>
+                                <td>{{ product.get_color_display }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Finition:</strong></td>
+                                <td>{{ product.get_finish_display }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Prix de revient:</strong></td>
+                                <td>{{ product.cost_price|floatformat:2 }}€</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Prix de vente:</strong></td>
+                                <td><strong class="text-success">{{ product.selling_price|floatformat:2 }}€</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Marge bénéficiaire:</strong></td>
+                                <td><span class="badge bg-success">{{ product.profit_margin|floatformat:1 }}%</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Unité de mesure:</strong></td>
+                                <td>{{ product.get_unit_display }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Catégorie:</strong></td>
+                                <td>{{ product.category|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Statut:</strong></td>
+                                <td>
+                                    <span class="badge bg-{% if product.status == 'active' %}success{% else %}secondary{% endif %}">
+                                        {{ product.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if product.description %}
+                <div class="mt-3">
+                    <strong>Description:</strong>
+                    <p class="mt-1">{{ product.description|linebreaks }}</p>
+                </div>
+                {% endif %}
+                
+                {% if product.supplier %}
+                <div class="mt-3">
+                    <strong>Fournisseur:</strong>
+                    <a href="{% url 'suppliers:detail' product.supplier.pk %}" class="text-decoration-none">
+                        {{ product.supplier.name }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <h6>Stock Actuel</h6>
+                                <h4 class="{% if product.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                                    {{ product.stock_quantity|floatformat:1 }}
+                                </h4>
+                                <small class="text-muted">{{ product.get_unit_display }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <h6>Stock Minimum</h6>
+                                <h4>{{ product.minimum_stock|floatformat:1 }}</h4>
+                                <small class="text-muted">{{ product.get_unit_display }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <h6>État du Stock</h6>
+                                <h4>
+                                    {% if product.is_low_stock %}
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        <span class="text-warning">Faible</span>
+                                    {% else %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        <span class="text-success">Normal</span>
+                                    {% endif %}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        {% if product.image %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Image Produit</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 200px;">
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Actions rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'orders:create' %}?product={{ product.pk }}" class="btn btn-outline-primary">
+                        <i class="fas fa-clipboard-list me-1"></i>Ajouter à une commande
+                    </a>
+                    <a href="{% url 'invoices:create' %}?product={{ product.pk }}" class="btn btn-outline-success">
+                        <i class="fas fa-file-invoice me-1"></i>Ajouter à une facture
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Informations</h5>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">
+                    <p><strong>Créé le:</strong><br>{{ product.created_at|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Modifié le:</strong><br>{{ product.updated_at|date:"d/m/Y H:i" }}</p>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

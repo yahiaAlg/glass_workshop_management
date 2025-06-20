@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Clients - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-users me-2"></i>Gestion des Clients</h1>
+    <a href="{% url 'customers:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Nouveau Client
+    </a>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" name="search" placeholder="Rechercher un client..."
+                    {% if search %}value="{{ search }}"{% endif %}>             
+                </div>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Rechercher</button>
+                {% if search %}
+                    <a href="{% url 'customers:list' %}" class="btn btn-outline-secondary">Effacer</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Liste des Clients ({{ customers.paginator.count }} au total)</h5>
+    </div>
+    <div class="card-body">
+        {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nom/Raison sociale</th>
+                            <th>Type</th>
+                            <th>Téléphone</th>
+                            <th>Email</th>
+                            <th>Statut</th>
+                            <th>Date de création</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                            <tr>
+                                <td>
+                                    <strong>{{ customer.name }}</strong>
+                                    {% if customer.contact_person %}
+                                        <br><small class="text-muted">Contact: {{ customer.contact_person }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if customer.customer_type == 'individual' %}info{% else %}success{% endif %}">
+                                        {{ customer.get_customer_type_display }}
+                                    </span>
+                                </td>
+                                <td>{{ customer.phone }}</td>
+                                <td>{{ customer.email|default:"-" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if customer.status == 'active' %}success{% else %}secondary{% endif %}">
+                                        {{ customer.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ customer.created_at|date:"d/m/Y" }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'customers:detail' customer.pk %}" class="btn btn-outline-info" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'customers:edit' customer.pk %}" class="btn btn-outline-primary" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if user.is_admin %}
+                                            <a href="{% url 'customers:delete' customer.pk %}" class="btn btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if customers.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if customers.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ customers.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Précédent</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in customers.paginator.page_range %}
+                            {% if customers.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if customers.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ customers.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Suivant</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun client trouvé</h5>
+                <p class="text-muted">
+                    {% if search %}
+                        Aucun client ne correspond à votre recherche.
+                    {% else %}
+                        Commencez par ajouter votre premier client.
+                    {% endif %}
+                </p>
+                <a href="{% url 'customers:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Nouveau Client
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

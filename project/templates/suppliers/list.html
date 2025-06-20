@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Fournisseurs - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-truck me-2"></i>Gestion des Fournisseurs</h1>
+    <a href="{% url 'suppliers:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Nouveau Fournisseur
+    </a>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" name="search" placeholder="Rechercher un fournisseur..."{% if search %}value="{{ search }}"{% endif %}>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Rechercher</button>
+                {% if search %}
+                    <a href="{% url 'suppliers:list' %}" class="btn btn-outline-secondary">Effacer</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Suppliers Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Fournisseurs ({{ suppliers.paginator.count }} au total)</h5>
+    </div>
+    <div class="card-body">
+        {% if suppliers %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nom du fournisseur</th>
+                            <th>Contact</th>
+                            <th>Téléphone</th>
+                            <th>Email</th>
+                            <th>Conditions paiement</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                            <tr>
+                                <td>
+                                    <strong>{{ supplier.name }}</strong>
+                                    {% if supplier.last_order_date %}
+                                        <br><small class="text-muted">Dernière commande: {{ supplier.last_order_date|date:"d/m/Y" }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ supplier.contact_person }}</td>
+                                <td>{{ supplier.phone }}</td>
+                                <td>{{ supplier.email|default:"-" }}</td>
+                                <td>{{ supplier.payment_terms }}</td>
+                                <td>
+                                    <span class="badge bg-{% if supplier.status == 'active' %}success{% else %}secondary{% endif %}">
+                                        {{ supplier.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'suppliers:detail' supplier.pk %}" class="btn btn-outline-info" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'suppliers:edit' supplier.pk %}" class="btn btn-outline-primary" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if user.is_admin %}
+                                            <a href="{% url 'suppliers:delete' supplier.pk %}" class="btn btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if suppliers.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if suppliers.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ suppliers.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Précédent</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in suppliers.paginator.page_range %}
+                            {% if suppliers.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if suppliers.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ suppliers.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Suivant</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun fournisseur trouvé</h5>
+                <p class="text-muted">
+                    {% if search %}
+                        Aucun fournisseur ne correspond à votre recherche.
+                    {% else %}
+                        Commencez par ajouter votre premier fournisseur.
+                    {% endif %}
+                </p>
+                <a href="{% url 'suppliers:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Nouveau Fournisseur
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

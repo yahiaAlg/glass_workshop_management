@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Factures - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-file-invoice me-2"></i>Gestion des Factures</h1>
+    <a href="{% url 'invoices:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Nouvelle Facture
+    </a>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" name="search" placeholder="Numéro de facture..." {% if search %}value="{{ search }}"{% endif %}>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
+                {% if search or status %}
+                    <a href="{% url 'invoices:list' %}" class="btn btn-outline-secondary">Effacer</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Factures ({{ invoices.paginator.count }} au total)</h5>
+    </div>
+    <div class="card-body">
+        {% if invoices %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Numéro</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th>Échéance</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                            <tr>
+                                <td><strong>{{ invoice.invoice_number }}</strong></td>
+                                <td>
+                                    {{ invoice.customer.name }}
+                                    {% if invoice.customer.customer_type == 'commercial' %}
+                                        <br><small class="text-muted">Entreprise</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ invoice.invoice_date|date:"d/m/Y" }}</td>
+                                <td>
+                                    {{ invoice.due_date|date:"d/m/Y" }}
+                                    {% if invoice.status == 'overdue' %}
+                                        <br><small class="text-danger">En retard</small>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ invoice.total_amount|floatformat:2 }}€</strong></td>
+                                <td>
+                                    <span class="badge bg-{% if invoice.status == 'paid' %}success{% elif invoice.status == 'overdue' %}danger{% elif invoice.status == 'sent' %}warning{% elif invoice.status == 'cancelled' %}secondary{% else %}info{% endif %}">
+                                        {{ invoice.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'invoices:detail' invoice.pk %}" class="btn btn-outline-info" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'invoices:print' invoice.pk %}" class="btn btn-outline-success" title="Imprimer" target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        {% if invoice.status != 'paid' %}
+                                            <a href="{% url 'invoices:edit' invoice.pk %}" class="btn btn-outline-primary" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if user.is_admin %}
+                                            <a href="{% url 'invoices:delete' invoice.pk %}" class="btn btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if invoices.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if invoices.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ invoices.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Précédent</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in invoices.paginator.page_range %}
+                            {% if invoices.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if invoices.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ invoices.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Suivant</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucune facture trouvée</h5>
+                <p class="text-muted">
+                    {% if search or status %}
+                        Aucune facture ne correspond à vos critères de recherche.
+                    {% else %}
+                        Commencez par créer votre première facture.
+                    {% endif %}
+                </p>
+                <a href="{% url 'invoices:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Nouvelle Facture
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

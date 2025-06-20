@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture {{ invoice.invoice_number }} - GlassWorks Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .card { border: none !important; box-shadow: none !important; }
+            body { background: white !important; }
+        }
+        
+        .invoice-header {
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .company-info {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .invoice-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2563eb;
+            text-align: right;
+        }
+        
+        .invoice-details {
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .billing-info {
+            background-color: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .invoice-table th {
+            background-color: #2563eb;
+            color: white;
+            padding: 12px;
+            border: none;
+        }
+        
+        .invoice-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .total-section {
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+        
+        .final-total {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        
+        .invoice-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-4">
+        <!-- Print Button -->
+        <div class="no-print mb-3">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print me-1"></i>Imprimer la facture
+            </button>
+            <a href="{% url 'invoices:detail' invoice.pk %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+        
+        <!-- Invoice Header -->
+        <div class="invoice-header row">
+            <div class="col-md-6">
+                <h1 class="fw-bold mb-1" style="color: #2563eb;">GlassWorks Pro</h1>
+                <div class="company-info">
+                    123 Glass Street<br>
+                    Glassville, GL 12345<br>
+                    Phone: (555) 123-4567<br>
+                    Email: info@glassworks.com
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="invoice-title">FACTURE</div>
+                <div class="invoice-details">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td><strong>Facture #:</strong></td>
+                            <td>{{ invoice.invoice_number }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date:</strong></td>
+                            <td>{{ invoice.invoice_date|date:"d/m/Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Échéance:</strong></td>
+                            <td>{{ invoice.due_date|date:"d/m/Y" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Billing Information -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="billing-info">
+                    <h5 class="fw-bold mb-3">Facturé à:</h5>
+                    <strong>{{ invoice.customer.name }}</strong><br>
+                    {% if invoice.customer.contact_person %}
+                        {{ invoice.customer.contact_person }}<br>
+                    {% endif %}
+                    {{ invoice.customer.address|linebreaksbr }}<br>
+                    <strong>Tél:</strong> {{ invoice.customer.phone }}<br>
+                    {% if invoice.customer.email %}
+                        <strong>Email:</strong> {{ invoice.customer.email }}<br>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                {% if invoice.delivery_address %}
+                <div class="billing-info">
+                    <h5 class="fw-bold mb-3">Livraison à:</h5>
+                    {{ invoice.delivery_address|linebreaksbr }}
+                    {% if invoice.delivery_date %}
+                        <br><strong>Date de livraison:</strong> {{ invoice.delivery_date|date:"d/m/Y" }}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Invoice Items -->
+        <div class="mt-4">
+            <table class="table invoice-table">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Description</th>
+                        <th class="text-center">Quantité</th>
+                        <th class="text-end">Prix unitaire</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.product.name }}</strong><br>
+                            <small class="text-muted">{{ item.product.code }}</small>
+                        </td>
+                        <td>
+                            {{ item.description }}
+                            {% if item.width and item.height %}
+                                <br><small class="text-muted">Dimensions: {{ item.width }}cm x {{ item.height }}cm</small>
+                            {% endif %}
+                            {% if item.thickness %}
+                                <br><small class="text-muted">Épaisseur: {{ item.thickness }}</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ item.quantity|floatformat:1 }}</td>
+                        <td class="text-end">{{ item.unit_price|floatformat:2 }}€</td>
+                        <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}€</strong></td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% for service in services %}
+                    <tr>
+                        <td colspan="2">
+                            <strong>{{ service.get_service_type_display }}</strong><br>
+                            <small class="text-muted">{{ service.description }}</small>
+                        </td>
+                        <td class="text-center">1</td>
+                        <td class="text-end">{{ service.amount|floatformat:2 }}€</td>
+                        <td class="text-end"><strong>{{ service.amount|floatformat:2 }}€</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Totals Section -->
+        <div class="row justify-content-end">
+            <div class="col-md-6">
+                <div class="total-section">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td><strong>Sous-total:</strong></td>
+                            <td class="text-end">{{ invoice.subtotal|floatformat:2 }}€</td>
+                        </tr>
+                        {% if invoice.services_total > 0 %}
+                        <tr>
+                            <td><strong>Services:</strong></td>
+                            <td class="text-end">{{ invoice.services_total|floatformat:2 }}€</td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.discount_amount > 0 %}
+                        <tr>
+                            <td><strong>Remise:</strong></td>
+                            <td class="text-end text-success">-{{ invoice.discount_amount|floatformat:2 }}€</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>TVA (19%):</strong></td>
+                            <td class="text-end">{{ invoice.tax_amount|floatformat:2 }}€</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td class="final-total">TOTAL:</td>
+                            <td class="text-end final-total">{{ invoice.total_amount|floatformat:2 }}€</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Information -->
+        {% if invoice.installation_notes or invoice.warranty_info or invoice.notes %}
+        <div class="mt-4">
+            {% if invoice.installation_notes %}
+            <div class="mb-3">
+                <h6><strong>Notes d'installation:</strong></h6>
+                <p>{{ invoice.installation_notes|linebreaks }}</p>
+            </div>
+            {% endif %}
+            
+            {% if invoice.warranty_info %}
+            <div class="mb-3">
+                <h6><strong>Informations de garantie:</strong></h6>
+                <p>{{ invoice.warranty_info|linebreaks }}</p>
+            </div>
+            {% endif %}
+            
+            {% if invoice.notes %}
+            <div class="mb-3">
+                <h6><strong>Notes:</strong></h6>
+                <p>{{ invoice.notes|linebreaks }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <p><strong>Merci pour votre confiance !</strong></p>
+            <p>Paiement dû dans les 14 jours. Mode de paiement: {{ invoice.get_payment_method_display }}</p>
+            <hr>
+            <p>GlassWorks Pro | RC: 123456789 | NIF: 987654321</p>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto print when page loads (optional)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>
