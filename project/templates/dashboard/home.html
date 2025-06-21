@@ -23,7 +23,7 @@
         <div class="card metric-card">
             <div class="card-body text-center">
                 <i class="fas fa-euro-sign fa-2x mb-2"></i>
-                <h3>{{ today_sales|floatformat:2 }}€</h3>
+                <h3>{{ today_sales|floatformat:2 }}DA</h3>
                 <p class="mb-0">Ventes du jour</p>
             </div>
         </div>
@@ -32,7 +32,7 @@
         <div class="card metric-card success">
             <div class="card-body text-center">
                 <i class="fas fa-chart-line fa-2x mb-2"></i>
-                <h3>{{ month_revenue|floatformat:2 }}€</h3>
+                <h3>{{ month_revenue|floatformat:2 }}DA</h3>
                 <p class="mb-0">Chiffre d'affaires du mois</p>
             </div>
         </div>
@@ -152,7 +152,7 @@
                                     <span class="badge bg-{% if invoice.status == 'paid' %}success{% elif invoice.status == 'overdue' %}danger{% else %}warning{% endif %}">
                                         {{ invoice.get_status_display }}
                                     </span><br>
-                                    <small class="text-muted">{{ invoice.total_amount|floatformat:2 }}€</small>
+                                    <small class="text-muted">{{ invoice.total_amount|floatformat:2 }}DA</small>
                                 </div>
                             </div>
                         {% endfor %}
@@ -204,7 +204,7 @@ new Chart(salesCtx, {
     data: {
         labels: {{ sales_chart_data.labels|safe }},
         datasets: [{
-            label: 'Ventes (€)',
+            label: 'Ventes (DA)',
             data: {{ sales_chart_data.data|safe }},
             borderColor: '#2563eb',
             backgroundColor: 'rgba(37, 99, 235, 0.1)',
@@ -221,7 +221,7 @@ new Chart(salesCtx, {
                 beginAtZero: true,
                 ticks: {
                     callback: function(value) {
-                        return value + '€';
+                        return value + 'DA';
                     }
                 }
             }

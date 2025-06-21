@@ -32,7 +32,7 @@
                             <label for="{{ form.amount.id_for_label }}" class="form-label">{{ form.amount.label }} *</label>
                             <div class="input-group">
                                 {{ form.amount }}
-                                <span class="input-group-text">€</span>
+                                <span class="input-group-text">DA</span>
                             </div>
                             {% if form.amount.errors %}
                                 <div class="text-danger small">{{ form.amount.errors.0 }}</div>
@@ -94,7 +94,7 @@
                     </tr>
                     <tr>
                         <td><strong>Montant total:</strong></td>
-                        <td><strong class="text-primary">{{ invoice.total_amount|floatformat:2 }}€</strong></td>
+                        <td><strong class="text-primary">{{ invoice.total_amount|floatformat:2 }}DA</strong></td>
                     </tr>
                     <tr>
                         <td><strong>Statut:</strong></td>

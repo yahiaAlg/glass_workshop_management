@@ -131,8 +131,8 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-center">{{ item.quantity|floatformat:1 }}</td>
-                                    <td class="text-end">{{ item.unit_price|floatformat:2 }}€</td>
-                                    <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}€</strong></td>
+                                    <td class="text-end">{{ item.unit_price|floatformat:2 }}DA</td>
+                                    <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}DA</strong></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -165,7 +165,7 @@
                             <tr>
                                 <td><strong>{{ service.get_service_type_display }}</strong></td>
                                 <td>{{ service.description }}</td>
-                                <td class="text-end"><strong>{{ service.amount|floatformat:2 }}€</strong></td>
+                                <td class="text-end"><strong>{{ service.amount|floatformat:2 }}DA</strong></td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -217,27 +217,27 @@
                 <table class="table table-borderless">
                     <tr>
                         <td>Sous-total:</td>
-                        <td class="text-end">{{ invoice.subtotal|floatformat:2 }}€</td>
+                        <td class="text-end">{{ invoice.subtotal|floatformat:2 }}DA</td>
                     </tr>
                     {% if invoice.services_total > 0 %}
                     <tr>
                         <td>Services:</td>
-                        <td class="text-end">{{ invoice.services_total|floatformat:2 }}€</td>
+                        <td class="text-end">{{ invoice.services_total|floatformat:2 }}DA</td>
                     </tr>
                     {% endif %}
                     {% if invoice.discount_amount > 0 %}
                     <tr>
                         <td>Remise:</td>
-                        <td class="text-end text-success">-{{ invoice.discount_amount|floatformat:2 }}€</td>
+                        <td class="text-end text-success">-{{ invoice.discount_amount|floatformat:2 }}DA</td>
                     </tr>
                     {% endif %}
                     <tr>
                         <td>TVA (19%):</td>
-                        <td class="text-end">{{ invoice.tax_amount|floatformat:2 }}€</td>
+                        <td class="text-end">{{ invoice.tax_amount|floatformat:2 }}DA</td>
                     </tr>
                     <tr class="border-top">
                         <td><strong>Total:</strong></td>
-                        <td class="text-end"><strong class="text-primary fs-5">{{ invoice.total_amount|floatformat:2 }}€</strong></td>
+                        <td class="text-end"><strong class="text-primary fs-5">{{ invoice.total_amount|floatformat:2 }}DA</strong></td>
                     </tr>
                 </table>
             </div>
@@ -258,7 +258,7 @@
                     {% for payment in payments %}
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
                         <div>
-                            <strong>{{ payment.amount|floatformat:2 }}€</strong><br>
+                            <strong>{{ payment.amount|floatformat:2 }}DA</strong><br>
                             <small class="text-muted">{{ payment.payment_date|date:"d/m/Y" }}</small>
                         </div>
                         <div class="text-end">
@@ -278,7 +278,7 @@
                         <strong class="text-success">
                             {% for payment in payments %}
                                 {% if payment.status == 'completed' %}{{ payment.amount|add:0 }}{% endif %}
-                            {% endfor %}€
+                            {% endfor %}DA
                         </strong>
                     </div>
                     {% endif %}

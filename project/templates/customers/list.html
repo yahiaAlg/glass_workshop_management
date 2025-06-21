@@ -12,24 +12,133 @@
 
 <!-- Search and Filters -->
 <div class="card mb-3">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" name="search" placeholder="Rechercher un client..."
-                    {% if search %}value="{{ search }}"{% endif %}>             
+    <div class="card-header">
+        <h6 class="card-title mb-0">
+            <i class="fas fa-filter me-2"></i>Recherche et Filtres
+            <button class="btn btn-sm btn-outline-secondary float-end" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </h6>
+    </div>
+    <div class="collapse show" id="filtersCollapse">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- Text Search -->
+                <div class="col-md-6">
+                    <label class="form-label">Recherche (nom, email, téléphone)</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" name="search" 
+                               placeholder="Rechercher un client..."
+                               value="{{ filters.search|default:'' }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary">Rechercher</button>
-                {% if search %}
-                    <a href="{% url 'customers:list' %}" class="btn btn-outline-secondary">Effacer</a>
-                {% endif %}
-            </div>
-        </form>
+                
+                <!-- Customer Type Filter -->
+                <div class="col-md-3">
+                    <label class="form-label">Type de client</label>
+                    <select class="form-select" name="customer_type">
+                        <option value="">Tous les types</option>
+                        {% for value, display in filters.customer_types %}
+                            <option value="{{ value }}" {% if filters.customer_type == value %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Date Range Filters -->
+                <div class="col-md-3">
+                    <label class="form-label">Date de création (du)</label>
+                    <input type="date" class="form-control" name="date_from" 
+                           value="{{ filters.date_from|default:'' }}">
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label">Date de création (au)</label>
+                    <input type="date" class="form-control" name="date_to" 
+                           value="{{ filters.date_to|default:'' }}">
+                </div>
+                
+                <!-- Purchase Amount Range -->
+                <div class="col-md-3">
+                    <label class="form-label">Montant total min (DA)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">DA</span>
+                        <input type="number" class="form-control" name="min_purchases" 
+                               placeholder="0" step="0.01"
+                               value="{{ filters.min_purchases|default:'' }}">
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label">Montant total max (DA)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">DA</span>
+                        <input type="number" class="form-control" name="max_purchases" 
+                               placeholder="∞" step="0.01"
+                               value="{{ filters.max_purchases|default:'' }}">
+                    </div>
+                </div>
+                
+                <!-- Filter Actions -->
+                <div class="col-12">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>Appliquer les filtres
+                        </button>
+                        <a href="{% url 'customers:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Effacer tout
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<!-- Active Filters Display -->
+{% if filters.search or filters.customer_type or filters.date_from or filters.date_to or filters.min_purchases or filters.max_purchases %}
+<div class="card mb-3 border-info">
+    <div class="card-body py-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <small class="text-muted me-2">Filtres actifs:</small>
+            
+            {% if filters.search %}
+                <span class="badge bg-info">
+                    Recherche: "{{ filters.search }}"
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'search' and value %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="text-white ms-1">×</a>
+                </span>
+            {% endif %}
+            
+            {% if filters.customer_type %}
+                <span class="badge bg-success">
+                    Type: {{ filters.customer_type|capfirst }}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'customer_type' and value %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="text-white ms-1">×</a>
+                </span>
+            {% endif %}
+            
+            {% if filters.date_from or filters.date_to %}
+                <span class="badge bg-warning text-dark">
+                    Période: 
+                    {% if filters.date_from %}{{ filters.date_from }}{% else %}∞{% endif %}
+                    → 
+                    {% if filters.date_to %}{{ filters.date_to }}{% else %}∞{% endif %}
+                </span>
+            {% endif %}
+            
+            {% if filters.min_purchases or filters.max_purchases %}
+                <span class="badge bg-secondary">
+                    Montant: 
+                    {% if filters.min_purchases %}{{ filters.min_purchases }}{% else %}0{% endif %}DA
+                    → 
+                    {% if filters.max_purchases %}{{ filters.max_purchases }}{% else %}∞{% endif %}DA
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Customers Table -->
 <div class="card">
@@ -46,6 +155,7 @@
                             <th>Type</th>
                             <th>Téléphone</th>
                             <th>Email</th>
+                            <th>Total achats</th>
                             <th>Statut</th>
                             <th>Date de création</th>
                             <th>Actions</th>
@@ -67,6 +177,9 @@
                                 </td>
                                 <td>{{ customer.phone }}</td>
                                 <td>{{ customer.email|default:"-" }}</td>
+                                <td>
+                                    <strong>{{ customer.get_total_purchases|floatformat:2 }} DA</strong>
+                                </td>
                                 <td>
                                     <span class="badge bg-{% if customer.status == 'active' %}success{% else %}secondary{% endif %}">
                                         {{ customer.get_status_display }}
@@ -100,7 +213,7 @@
                     <ul class="pagination justify-content-center">
                         {% if customers.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ customers.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Précédent</a>
+                                <a class="page-link" href="?page={{ customers.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Précédent</a>
                             </li>
                         {% endif %}
                         
@@ -111,14 +224,14 @@
                                 </li>
                             {% else %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
                         
                         {% if customers.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ customers.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Suivant</a>
+                                <a class="page-link" href="?page={{ customers.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Suivant</a>
                             </li>
                         {% endif %}
                     </ul>
@@ -129,8 +242,8 @@
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun client trouvé</h5>
                 <p class="text-muted">
-                    {% if search %}
-                        Aucun client ne correspond à votre recherche.
+                    {% if filters.search or filters.customer_type or filters.date_from or filters.date_to or filters.min_purchases or filters.max_purchases %}
+                        Aucun client ne correspond aux critères de recherche.
                     {% else %}
                         Commencez par ajouter votre premier client.
                     {% endif %}
@@ -142,4 +255,13 @@
         {% endif %}
     </div>
 </div>
+
+<style>
+.badge a {
+    text-decoration: none;
+}
+.badge a:hover {
+    text-decoration: underline;
+}
+</style>
 {% endblock %}

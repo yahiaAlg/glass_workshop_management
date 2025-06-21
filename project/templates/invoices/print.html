@@ -310,8 +310,8 @@
                         {% endif %}
                     </td>
                     <td>{{ item.quantity|floatformat:1 }}</td>
-                    <td class="text-right">{{ item.unit_price|floatformat:2 }}€</td>
-                    <td class="text-right"><strong>{{ item.subtotal|floatformat:2 }}€</strong></td>
+                    <td class="text-right">{{ item.unit_price|floatformat:2 }}DA</td>
+                    <td class="text-right"><strong>{{ item.subtotal|floatformat:2 }}DA</strong></td>
                 </tr>
                 {% endfor %}
                 
@@ -326,8 +326,8 @@
                     <td>-</td>
                     <td>-</td>
                     <td>1</td>
-                    <td class="text-right">{{ service.amount|floatformat:2 }}€</td>
-                    <td class="text-right"><strong>{{ service.amount|floatformat:2 }}€</strong></td>
+                    <td class="text-right">{{ service.amount|floatformat:2 }}DA</td>
+                    <td class="text-right"><strong>{{ service.amount|floatformat:2 }}DA</strong></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -338,27 +338,27 @@
             <table class="totals-table">
                 <tr>
                     <td><strong>Sous-total:</strong></td>
-                    <td class="text-right">{{ invoice.subtotal|floatformat:2 }}€</td>
+                    <td class="text-right">{{ invoice.subtotal|floatformat:2 }}DA</td>
                 </tr>
                 {% if invoice.services_total > 0 %}
                 <tr>
                     <td><strong>Services:</strong></td>
-                    <td class="text-right">{{ invoice.services_total|floatformat:2 }}€</td>
+                    <td class="text-right">{{ invoice.services_total|floatformat:2 }}DA</td>
                 </tr>
                 {% endif %}
                 {% if invoice.discount_amount > 0 %}
                 <tr>
                     <td><strong>Remise:</strong></td>
-                    <td class="text-right" style="color: #059669;">-{{ invoice.discount_amount|floatformat:2 }}€</td>
+                    <td class="text-right" style="color: #059669;">-{{ invoice.discount_amount|floatformat:2 }}DA</td>
                 </tr>
                 {% endif %}
                 <tr>
                     <td><strong>TVA (19%):</strong></td>
-                    <td class="text-right">{{ invoice.tax_amount|floatformat:2 }}€</td>
+                    <td class="text-right">{{ invoice.tax_amount|floatformat:2 }}DA</td>
                 </tr>
                 <tr class="final-total">
                     <td><strong>TOTAL:</strong></td>
-                    <td class="text-right"><strong>{{ invoice.total_amount|floatformat:2 }}€</strong></td>
+                    <td class="text-right"><strong>{{ invoice.total_amount|floatformat:2 }}DA</strong></td>
                 </tr>
             </table>
         </div>

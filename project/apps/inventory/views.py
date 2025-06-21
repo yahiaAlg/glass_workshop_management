@@ -10,30 +10,112 @@ from .forms import GlassProductForm
 def product_list(request):
     products = GlassProduct.objects.all().order_by('-created_at')
     
-    # Search functionality
+    # Search functionality - search by code and name
     search = request.GET.get('search')
     if search:
         products = products.filter(
             Q(name__icontains=search) |
-            Q(code__icontains=search) |
-            Q(glass_type__icontains=search)
+            Q(code__icontains=search)
         )
+    
+    # Filter by glass type
+    glass_type = request.GET.get('glass_type')
+    if glass_type:
+        products = products.filter(glass_type=glass_type)
+    
+    # Filter by thickness
+    thickness = request.GET.get('thickness')
+    if thickness:
+        products = products.filter(thickness=thickness)
+    
+    # Filter by unit of measure
+    unit = request.GET.get('unit')
+    if unit:
+        products = products.filter(unit=unit)
+    
+    # Filter by selling price range
+    min_selling_price = request.GET.get('min_selling_price')
+    max_selling_price = request.GET.get('max_selling_price')
+    if min_selling_price:
+        try:
+            products = products.filter(selling_price__gte=float(min_selling_price))
+        except ValueError:
+            pass
+    if max_selling_price:
+        try:
+            products = products.filter(selling_price__lte=float(max_selling_price))
+        except ValueError:
+            pass
+    
+    # Filter by cost price range
+    min_cost_price = request.GET.get('min_cost_price')
+    max_cost_price = request.GET.get('max_cost_price')
+    if min_cost_price:
+        try:
+            products = products.filter(cost_price__gte=float(min_cost_price))
+        except ValueError:
+            pass
+    if max_cost_price:
+        try:
+            products = products.filter(cost_price__lte=float(max_cost_price))
+        except ValueError:
+            pass
+    
+    # Filter by stock quantity range
+    min_stock = request.GET.get('min_stock')
+    max_stock = request.GET.get('max_stock')
+    if min_stock:
+        try:
+            products = products.filter(stock_quantity__gte=float(min_stock))
+        except ValueError:
+            pass
+    if max_stock:
+        try:
+            products = products.filter(stock_quantity__lte=float(max_stock))
+        except ValueError:
+            pass
     
     # Filter by low stock
     low_stock = request.GET.get('low_stock')
     if low_stock:
-        products = [p for p in products if p.is_low_stock()]
+        # Convert to list to use is_low_stock method
+        products_list = list(products)
+        products_list = [p for p in products_list if p.is_low_stock()]
+        
+        # Create a paginator with the filtered list
+        paginator = Paginator(products_list, 10)
+        page_number = request.GET.get('page')
+        products = paginator.get_page(page_number)
+    else:
+        # Standard pagination
+        paginator = Paginator(products, 10)
+        page_number = request.GET.get('page')
+        products = paginator.get_page(page_number)
     
-    # Pagination
-    paginator = Paginator(products, 10)
-    page_number = request.GET.get('page')
-    products = paginator.get_page(page_number)
+    # Get choices for filter dropdowns
+    glass_types = GlassProduct.GLASS_TYPES
+    thickness_choices = GlassProduct.THICKNESS_CHOICES
+    unit_choices = GlassProduct.UNIT_CHOICES
     
-    return render(request, 'inventory/list.html', {
-        'products': products, 
+    context = {
+        'products': products,
         'search': search,
-        'low_stock': low_stock
-    })
+        'glass_type': glass_type,
+        'thickness': thickness,
+        'unit': unit,
+        'min_selling_price': min_selling_price,
+        'max_selling_price': max_selling_price,
+        'min_cost_price': min_cost_price,
+        'max_cost_price': max_cost_price,
+        'min_stock': min_stock,
+        'max_stock': max_stock,
+        'low_stock': low_stock,
+        'glass_types': glass_types,
+        'thickness_choices': thickness_choices,
+        'unit_choices': unit_choices,
+    }
+    
+    return render(request, 'inventory/list.html', context)
 
 @login_required
 def product_create(request):

@@ -13,7 +13,7 @@
                     </a>
                 {% endif %}
                 {% if order.status == 'confirmed' %}
-                    <a href="{% url 'invoices:create' %}?order={{ order.pk }}" class="btn btn-success">
+                    <a href="{% url 'invoices:create' %}?order_id={{ order.pk }}" class="btn btn-success">
                         <i class="fas fa-file-invoice me-1"></i>Créer Facture
                     </a>
                 {% endif %}
@@ -85,7 +85,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Montant total:</strong></td>
-                                    <td><strong class="text-primary">{{ order.total_amount|floatformat:2 }}€</strong></td>
+                                    <td><strong class="text-primary">{{ order.total_amount|floatformat:2 }}DA</strong></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Dernière modification:</strong></td>
@@ -149,8 +149,8 @@
                                         <td class="text-center">{{ item.width|floatformat:1 }} × {{ item.height|floatformat:1 }} cm</td>
                                         <td class="text-center">{{ item.surface|floatformat:2 }} m²</td>
                                         <td class="text-center">{{ item.quantity|floatformat:1 }}</td>
-                                        <td class="text-end">{{ item.unit_price|floatformat:2 }}€</td>
-                                        <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}€</strong></td>
+                                        <td class="text-end">{{ item.unit_price|floatformat:2 }}DA</td>
+                                        <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}DA</strong></td>
                                         <td>{{ item.notes|default:"-" }}</td>
                                     </tr>
                                     {% endfor %}
@@ -158,7 +158,7 @@
                                 <tfoot class="table-light">
                                     <tr>
                                         <th colspan="3">Total Commande:</th>
-                                        <th class="text-end">{{ order.total_amount|floatformat:2 }}€</th>
+                                        <th class="text-end">{{ order.total_amount|floatformat:2 }}DA</th>
                                         <th></th>
                                     </tr>
                                 </tfoot>
@@ -245,7 +245,7 @@
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         {% if order.status == 'confirmed' %}
-                            <a href="{% url 'invoices:create' %}?order={{ order.pk }}" class="btn btn-outline-success">
+                            <a href="{% url 'invoices:create' %}?order_id={{ order.pk }}" class="btn btn-outline-success">
                                 <i class="fas fa-file-invoice me-1"></i>Créer une facture
                             </a>
                         {% endif %}

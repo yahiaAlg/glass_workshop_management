@@ -145,7 +145,7 @@
                         </tr>
                         <tr class="border-top">
                             <td><strong>Total:</strong></td>
-                            <td class="text-end"><strong id="total-amount">0.00€</strong></td>
+                            <td class="text-end"><strong id="total-amount">0.00DA</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -200,7 +200,7 @@
                         <select name="form-${itemFormCount}-product" class="form-select" id="id_form-${itemFormCount}-product">
                             <option value="">---------</option>
                             {% for product in formset.form.product.field.queryset %}
-                            <option value="{{ product.pk }}">{{ product.name }} - {{ product.selling_price }}€</option>
+                            <option value="{{ product.pk }}">{{ product.name }} - {{ product.selling_price }}DA</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -269,7 +269,7 @@
         const subtotal = surface * quantity * price;
         
         const subtotalDisplay = itemContainer.querySelector('.subtotal-display');
-        subtotalDisplay.value = subtotal.toFixed(2) + '€';
+        subtotalDisplay.value = subtotal.toFixed(2) + 'DA';
         
         calculateTotals();
     }
@@ -292,7 +292,7 @@
         });
         
         document.getElementById('total-items').textContent = totalItems.toFixed(1);
-        document.getElementById('total-amount').textContent = totalAmount.toFixed(2) + '€';
+        document.getElementById('total-amount').textContent = totalAmount.toFixed(2) + 'DA';
     }
 
     // Recalculate on input changes
@@ -319,7 +319,7 @@
                 // Get product price from the selected option text
                 const selectedOption = productSelect.options[productSelect.selectedIndex];
                 const optionText = selectedOption.text;
-                const price = optionText.split(' - ')[1]?.replace('€', '');
+                const price = optionText.split(' - ')[1]?.replace('DA', '');
                 
                 if (price) {
                     priceInput.value = price;

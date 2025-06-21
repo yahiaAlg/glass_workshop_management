@@ -13,27 +13,109 @@
 <!-- Search and Filters -->
 <div class="card mb-3">
     <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" name="search" placeholder="Rechercher un fournisseur..."{% if search %}value="{{ search }}"{% endif %}>
+        <form method="get" id="filterForm">
+            <div class="row g-3">
+                <!-- Text Search -->
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Recherche globale</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               placeholder="Nom, email, téléphone, contact, adresse..."
+                               value="{{ search|default:'' }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary">Rechercher</button>
-                {% if search %}
-                    <a href="{% url 'suppliers:list' %}" class="btn btn-outline-secondary">Effacer</a>
-                {% endif %}
+                
+                <!-- Status Filter -->
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Statut</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">Tous les statuts</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Payment Terms Filter -->
+                <div class="col-md-3">
+                    <label for="payment_terms" class="form-label">Conditions de paiement</label>
+                    <select class="form-select" id="payment_terms" name="payment_terms">
+                        <option value="">Toutes les conditions</option>
+                        {% for term in payment_terms_choices %}
+                            {% if term %}
+                                <option value="{{ term }}" {% if payment_terms == term %}selected{% endif %}>{{ term }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Last Order Date From -->
+                <div class="col-md-3">
+                    <label for="last_order_from" class="form-label">Dernière commande du</label>
+                    <input type="date" class="form-control" id="last_order_from" name="last_order_from" 
+                           value="{{ last_order_from|default:'' }}">
+                </div>
+                
+                <!-- Last Order Date To -->
+                <div class="col-md-3">
+                    <label for="last_order_to" class="form-label">Dernière commande au</label>
+                    <input type="date" class="form-control" id="last_order_to" name="last_order_to" 
+                           value="{{ last_order_to|default:'' }}">
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="col-md-6">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i>Filtrer
+                        </button>
+                        <a href="{% url 'suppliers:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Effacer les filtres
+                        </a>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Active Filters Display -->
+{% if search or payment_terms or last_order_from or last_order_to or status %}
+<div class="card mb-3 border-info">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center">
+            <small class="text-info me-2"><i class="fas fa-filter"></i> Filtres actifs:</small>
+            <div class="d-flex flex-wrap gap-1">
+                {% if search %}
+                    <span class="badge bg-info">Recherche: "{{ search }}"</span>
+                {% endif %}
+                {% if status %}
+                    <span class="badge bg-info">Statut: {{ status|capfirst }}</span>
+                {% endif %}
+                {% if payment_terms %}
+                    <span class="badge bg-info">Paiement: {{ payment_terms }}</span>
+                {% endif %}
+                {% if last_order_from %}
+                    <span class="badge bg-info">Commande du: {{ last_order_from }}</span>
+                {% endif %}
+                {% if last_order_to %}
+                    <span class="badge bg-info">Commande au: {{ last_order_to }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Suppliers Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Fournisseurs ({{ suppliers.paginator.count }} au total)</h5>
+        <h5 class="card-title mb-0">
+            Fournisseurs 
+            <span class="badge bg-primary ms-2">{{ suppliers.paginator.count }} résultat{{ suppliers.paginator.count|pluralize }}</span>
+        </h5>
     </div>
     <div class="card-body">
         {% if suppliers %}
@@ -56,13 +138,31 @@
                                 <td>
                                     <strong>{{ supplier.name }}</strong>
                                     {% if supplier.last_order_date %}
-                                        <br><small class="text-muted">Dernière commande: {{ supplier.last_order_date|date:"d/m/Y" }}</small>
+                                        <br><small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            Dernière commande: {{ supplier.last_order_date|date:"d/m/Y" }}
+                                        </small>
+                                    {% else %}
+                                        <br><small class="text-muted">
+                                            <i class="fas fa-calendar-times me-1"></i>
+                                            Aucune commande
+                                        </small>
                                     {% endif %}
                                 </td>
                                 <td>{{ supplier.contact_person }}</td>
-                                <td>{{ supplier.phone }}</td>
-                                <td>{{ supplier.email|default:"-" }}</td>
-                                <td>{{ supplier.payment_terms }}</td>
+                                <td>
+                                    <i class="fas fa-phone me-1"></i>{{ supplier.phone }}
+                                </td>
+                                <td>
+                                    {% if supplier.email %}
+                                        <i class="fas fa-envelope me-1"></i>{{ supplier.email }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <i class="fas fa-money-bill-wave me-1"></i>{{ supplier.payment_terms }}
+                                </td>
                                 <td>
                                     <span class="badge bg-{% if supplier.status == 'active' %}success{% else %}secondary{% endif %}">
                                         {{ supplier.get_status_display }}
@@ -95,7 +195,7 @@
                     <ul class="pagination justify-content-center">
                         {% if suppliers.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ suppliers.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Précédent</a>
+                                <a class="page-link" href="?page={{ suppliers.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if payment_terms %}&payment_terms={{ payment_terms }}{% endif %}{% if last_order_from %}&last_order_from={{ last_order_from }}{% endif %}{% if last_order_to %}&last_order_to={{ last_order_to }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Précédent</a>
                             </li>
                         {% endif %}
                         
@@ -106,14 +206,14 @@
                                 </li>
                             {% else %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if payment_terms %}&payment_terms={{ payment_terms }}{% endif %}{% if last_order_from %}&last_order_from={{ last_order_from }}{% endif %}{% if last_order_to %}&last_order_to={{ last_order_to }}{% endif %}{% if status %}&status={{ status }}{% endif %}">{{ num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
                         
                         {% if suppliers.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ suppliers.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Suivant</a>
+                                <a class="page-link" href="?page={{ suppliers.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if payment_terms %}&payment_terms={{ payment_terms }}{% endif %}{% if last_order_from %}&last_order_from={{ last_order_from }}{% endif %}{% if last_order_to %}&last_order_to={{ last_order_to }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Suivant</a>
                             </li>
                         {% endif %}
                     </ul>
@@ -124,8 +224,9 @@
                 <i class="fas fa-truck fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun fournisseur trouvé</h5>
                 <p class="text-muted">
-                    {% if search %}
-                        Aucun fournisseur ne correspond à votre recherche.
+                    {% if search or payment_terms or last_order_from or last_order_to or status %}
+                        Aucun fournisseur ne correspond aux critères de recherche.
+                        <br><a href="{% url 'suppliers:list' %}" class="text-primary">Effacer les filtres</a> pour voir tous les fournisseurs.
                     {% else %}
                         Commencez par ajouter votre premier fournisseur.
                     {% endif %}
@@ -137,4 +238,24 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+// Auto-submit form when filters change (optional UX enhancement)
+document.addEventListener('DOMContentLoaded', function() {
+    const selects = document.querySelectorAll('#status, #payment_terms');
+    const dateInputs = document.querySelectorAll('#last_order_from, #last_order_to');
+    
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+    
+    dateInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+});
+</script>
 {% endblock %}

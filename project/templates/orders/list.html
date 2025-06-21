@@ -14,29 +14,142 @@
 <div class="card mb-3">
     <div class="card-body">
         <form method="get" class="row g-3">
-            <div class="col-md-4">
+            <!-- Text Search -->
+            <div class="col-md-6">
+                <label for="search" class="form-label">Recherche</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" name="search" placeholder="Numéro de commande..." {% if search %}value="{{ search }}"{% endif %}>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           placeholder="Numéro de commande ou nom du client..." 
+                           {% if search %}value="{{ search }}"{% endif %}>
                 </div>
             </div>
+            
+            <!-- Status Filter -->
             <div class="col-md-3">
-                <select name="status" class="form-select">
+                <label for="status" class="form-label">Statut</label>
+                <select name="status" id="status" class="form-select">
                     <option value="">Tous les statuts</option>
                     {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary">Filtrer</button>
-                {% if search or status %}
-                    <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary">Effacer</a>
+            
+            <!-- Toggle Advanced Filters -->
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" 
+                        data-bs-target="#advancedFilters" aria-expanded="false">
+                    <i class="fas fa-filter me-1"></i>Filtres avancés
+                </button>
+            </div>
+            
+            <!-- Advanced Filters (Collapsible) -->
+            <div class="collapse" id="advancedFilters">
+                <div class="row g-3 mt-2 pt-3 border-top">
+                    <!-- Order Date Range -->
+                    <div class="col-md-6">
+                        <label class="form-label">Date de commande</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="date" class="form-control" name="order_date_from" 
+                                       placeholder="Du" {% if order_date_from %}value="{{ order_date_from }}"{% endif %}>
+                            </div>
+                            <div class="col-auto align-self-center">
+                                <span class="text-muted">au</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" class="form-control" name="order_date_to" 
+                                       placeholder="Au" {% if order_date_to %}value="{{ order_date_to }}"{% endif %}>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Date Range -->
+                    <div class="col-md-6">
+                        <label class="form-label">Date de livraison</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="date" class="form-control" name="delivery_date_from" 
+                                       placeholder="Du" {% if delivery_date_from %}value="{{ delivery_date_from }}"{% endif %}>
+                            </div>
+                            <div class="col-auto align-self-center">
+                                <span class="text-muted">au</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" class="form-control" name="delivery_date_to" 
+                                       placeholder="Au" {% if delivery_date_to %}value="{{ delivery_date_to }}"{% endif %}>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Amount Range -->
+                    <div class="col-md-6">
+                        <label class="form-label">Montant (DA)</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="number" class="form-control" name="amount_min" step="0.01"
+                                       placeholder="Minimum" {% if amount_min %}value="{{ amount_min }}"{% endif %}>
+                            </div>
+                            <div class="col-auto align-self-center">
+                                <span class="text-muted">à</span>
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" name="amount_max" step="0.01"
+                                       placeholder="Maximum" {% if amount_max %}value="{{ amount_max }}"{% endif %}>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Filtrer
+                </button>
+                {% if search or status or order_date_from or order_date_to or delivery_date_from or delivery_date_to or amount_min or amount_max %}
+                    <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Effacer tous les filtres
+                    </a>
                 {% endif %}
             </div>
         </form>
     </div>
 </div>
+
+<!-- Active Filters Display -->
+{% if search or status or order_date_from or order_date_to or delivery_date_from or delivery_date_to or amount_min or amount_max %}
+<div class="alert alert-info">
+    <strong>Filtres actifs:</strong>
+    {% if search %}<span class="badge bg-primary me-1">Recherche: "{{ search }}"</span>{% endif %}
+    {% if status %}<span class="badge bg-secondary me-1">Statut: {{ status|capfirst }}</span>{% endif %}
+    {% if order_date_from or order_date_to %}
+        <span class="badge bg-info me-1">
+            Date commande: 
+            {% if order_date_from %}{{ order_date_from }}{% else %}...{% endif %} 
+            - 
+            {% if order_date_to %}{{ order_date_to }}{% else %}...{% endif %}
+        </span>
+    {% endif %}
+    {% if delivery_date_from or delivery_date_to %}
+        <span class="badge bg-success me-1">
+            Date livraison: 
+            {% if delivery_date_from %}{{ delivery_date_from }}{% else %}...{% endif %} 
+            - 
+            {% if delivery_date_to %}{{ delivery_date_to }}{% else %}...{% endif %}
+        </span>
+    {% endif %}
+    {% if amount_min or amount_max %}
+        <span class="badge bg-warning me-1">
+            Montant: 
+            {% if amount_min %}{{ amount_min }}DA{% else %}0DA{% endif %} 
+            - 
+            {% if amount_max %}{{ amount_max }}DA{% else %}∞{% endif %}
+        </span>
+    {% endif %}
+</div>
+{% endif %}
 
 <!-- Orders Table -->
 <div class="card">
@@ -76,7 +189,7 @@
                                         <span class="text-muted">Non définie</span>
                                     {% endif %}
                                 </td>
-                                <td><strong>{{ order.total_amount|floatformat:2 }}€</strong></td>
+                                <td><strong>{{ order.total_amount|floatformat:2 }}DA</strong></td>
                                 <td>
                                     <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'confirmed' %}info{% elif order.status == 'cancelled' %}secondary{% else %}warning{% endif %}">
                                         {{ order.get_status_display }}
@@ -92,12 +205,12 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                         {% endif %}
-                                        {% if order.status == 'confirmed' %}
-                                            <a href="{% url 'invoices:create' %}?order={{ order.pk }}" class="btn btn-outline-success" title="Créer facture">
+                                        {% if order.status == 'confirmed' or order.status == 'delivered' %}
+                                            <a href="{% url 'invoices:create' %}?order_id={{ order.pk }}" class="btn btn-outline-success" title="Créer facture">
                                                 <i class="fas fa-file-invoice"></i>
                                             </a>
                                         {% endif %}
-                                        {% if user.is_admin %}
+                                        {% if user.role == 'admin' %}
                                             <a href="{% url 'orders:delete' order.pk %}" class="btn btn-outline-danger" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </a>
@@ -116,7 +229,7 @@
                     <ul class="pagination justify-content-center">
                         {% if orders.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ orders.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Précédent</a>
+                                <a class="page-link" href="?page={{ orders.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if order_date_from %}&order_date_from={{ order_date_from }}{% endif %}{% if order_date_to %}&order_date_to={{ order_date_to }}{% endif %}{% if delivery_date_from %}&delivery_date_from={{ delivery_date_from }}{% endif %}{% if delivery_date_to %}&delivery_date_to={{ delivery_date_to }}{% endif %}{% if amount_min %}&amount_min={{ amount_min }}{% endif %}{% if amount_max %}&amount_max={{ amount_max }}{% endif %}">Précédent</a>
                             </li>
                         {% endif %}
                         
@@ -127,14 +240,14 @@
                                 </li>
                             {% else %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">{{ num }}</a>
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if order_date_from %}&order_date_from={{ order_date_from }}{% endif %}{% if order_date_to %}&order_date_to={{ order_date_to }}{% endif %}{% if delivery_date_from %}&delivery_date_from={{ delivery_date_from }}{% endif %}{% if delivery_date_to %}&delivery_date_to={{ delivery_date_to }}{% endif %}{% if amount_min %}&amount_min={{ amount_min }}{% endif %}{% if amount_max %}&amount_max={{ amount_max }}{% endif %}">{{ num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
                         
                         {% if orders.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ orders.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}">Suivant</a>
+                                <a class="page-link" href="?page={{ orders.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if order_date_from %}&order_date_from={{ order_date_from }}{% endif %}{% if order_date_to %}&order_date_to={{ order_date_to }}{% endif %}{% if delivery_date_from %}&delivery_date_from={{ delivery_date_from }}{% endif %}{% if delivery_date_to %}&delivery_date_to={{ delivery_date_to }}{% endif %}{% if amount_min %}&amount_min={{ amount_min }}{% endif %}{% if amount_max %}&amount_max={{ amount_max }}{% endif %}">Suivant</a>
                             </li>
                         {% endif %}
                     </ul>
@@ -145,7 +258,7 @@
                 <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucune commande trouvée</h5>
                 <p class="text-muted">
-                    {% if search or status %}
+                    {% if search or status or order_date_from or order_date_to or delivery_date_from or delivery_date_to or amount_min or amount_max %}
                         Aucune commande ne correspond à vos critères de recherche.
                     {% else %}
                         Commencez par créer votre première commande.

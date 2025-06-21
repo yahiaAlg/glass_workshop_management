@@ -14,13 +14,18 @@
 <div class="card mb-3">
     <div class="card-body">
         <form method="get" class="row g-3">
-            <div class="col-md-5">
+            <!-- Text Search -->
+            <div class="col-md-6">
+                <label for="search" class="form-label">Recherche (Code/Nom)</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" name="search" placeholder="Rechercher un produit..." {% if search %}value="{{ search }}"{% endif %}>
+                    <input type="text" class="form-control" name="search" id="search" placeholder="Rechercher par code ou nom..." {% if search %}value="{{ search }}"{% endif %}>
                 </div>
             </div>
-            <div class="col-md-3">
+            
+            <!-- Low Stock Filter -->
+            <div class="col-md-6">
+                <label class="form-label">&nbsp;</label>
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="low_stock" id="lowStockFilter" {% if low_stock %}checked{% endif %}>
                     <label class="form-check-label" for="lowStockFilter">
@@ -28,14 +33,98 @@
                     </label>
                 </div>
             </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary">Filtrer</button>
-                {% if search or low_stock %}
-                    <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">Effacer</a>
-                {% endif %}
-                <a href="{% url 'inventory:low_stock' %}" class="btn btn-warning">
-                    <i class="fas fa-exclamation-triangle me-1"></i>Alertes Stock
-                </a>
+            
+            <!-- Glass Type Filter -->
+            <div class="col-md-3">
+                <label for="glass_type" class="form-label">Type de verre</label>
+                <select class="form-select" name="glass_type" id="glass_type">
+                    <option value="">Tous les types</option>
+                    {% for value, label in glass_types %}
+                        <option value="{{ value }}" {% if glass_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Thickness Filter -->
+            <div class="col-md-3">
+                <label for="thickness" class="form-label">Épaisseur</label>
+                <select class="form-select" name="thickness" id="thickness">
+                    <option value="">Toutes épaisseurs</option>
+                    {% for value, label in thickness_choices %}
+                        <option value="{{ value }}" {% if thickness == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Unit Filter -->
+            <div class="col-md-3">
+                <label for="unit" class="form-label">Unité</label>
+                <select class="form-select" name="unit" id="unit">
+                    <option value="">Toutes unités</option>
+                    {% for value, label in unit_choices %}
+                        <option value="{{ value }}" {% if unit == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Action Buttons Column -->
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                    {% if search or glass_type or thickness or unit or min_selling_price or max_selling_price or min_cost_price or max_cost_price or min_stock or max_stock or low_stock %}
+                        <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">Effacer</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Price Range Filters -->
+            <div class="col-md-6">
+                <label class="form-label">Prix de vente (DA)</label>
+                <div class="row">
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="min_selling_price" placeholder="Min" step="0.01" {% if min_selling_price %}value="{{ min_selling_price }}"{% endif %}>
+                    </div>
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="max_selling_price" placeholder="Max" step="0.01" {% if max_selling_price %}value="{{ max_selling_price }}"{% endif %}>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cost Price Range Filters -->
+            <div class="col-md-6">
+                <label class="form-label">Prix de revient (DA)</label>
+                <div class="row">
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="min_cost_price" placeholder="Min" step="0.01" {% if min_cost_price %}value="{{ min_cost_price }}"{% endif %}>
+                    </div>
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="max_cost_price" placeholder="Max" step="0.01" {% if max_cost_price %}value="{{ max_cost_price }}"{% endif %}>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stock Quantity Range Filters -->
+            <div class="col-md-6">
+                <label class="form-label">Quantité en stock</label>
+                <div class="row">
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="min_stock" placeholder="Min" step="0.1" {% if min_stock %}value="{{ min_stock }}"{% endif %}>
+                    </div>
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="max_stock" placeholder="Max" step="0.1" {% if max_stock %}value="{{ max_stock }}"{% endif %}>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stock Alert Button -->
+            <div class="col-md-6">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <a href="{% url 'inventory:low_stock' %}" class="btn btn-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Alertes Stock
+                    </a>
+                </div>
             </div>
         </form>
     </div>
@@ -58,6 +147,7 @@
                             <th>Épaisseur</th>
                             <th>Stock</th>
                             <th>Prix de vente</th>
+                            <th>Prix de revient</th>
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
@@ -99,7 +189,8 @@
                                     </div>
                                     <small class="text-muted">Min: {{ product.minimum_stock|floatformat:1 }}</small>
                                 </td>
-                                <td><strong>{{ product.selling_price|floatformat:2 }}€</strong></td>
+                                <td><strong>{{ product.selling_price|floatformat:2 }}DA</strong></td>
+                                <td><span class="text-muted">{{ product.cost_price|floatformat:2 }}DA</span></td>
                                 <td>
                                     <span class="badge bg-{% if product.status == 'active' %}success{% else %}secondary{% endif %}">
                                         {{ product.get_status_display }}
@@ -132,7 +223,7 @@
                     <ul class="pagination justify-content-center">
                         {% if products.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ products.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">Précédent</a>
+                                <a class="page-link" href="?page={{ products.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if glass_type %}&glass_type={{ glass_type }}{% endif %}{% if thickness %}&thickness={{ thickness }}{% endif %}{% if unit %}&unit={{ unit }}{% endif %}{% if min_selling_price %}&min_selling_price={{ min_selling_price }}{% endif %}{% if max_selling_price %}&max_selling_price={{ max_selling_price }}{% endif %}{% if min_cost_price %}&min_cost_price={{ min_cost_price }}{% endif %}{% if max_cost_price %}&max_cost_price={{ max_cost_price }}{% endif %}{% if min_stock %}&min_stock={{ min_stock }}{% endif %}{% if max_stock %}&max_stock={{ max_stock }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">Précédent</a>
                             </li>
                         {% endif %}
                         
@@ -143,14 +234,14 @@
                                 </li>
                             {% else %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">{{ num }}</a>
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if glass_type %}&glass_type={{ glass_type }}{% endif %}{% if thickness %}&thickness={{ thickness }}{% endif %}{% if unit %}&unit={{ unit }}{% endif %}{% if min_selling_price %}&min_selling_price={{ min_selling_price }}{% endif %}{% if max_selling_price %}&max_selling_price={{ max_selling_price }}{% endif %}{% if min_cost_price %}&min_cost_price={{ min_cost_price }}{% endif %}{% if max_cost_price %}&max_cost_price={{ max_cost_price }}{% endif %}{% if min_stock %}&min_stock={{ min_stock }}{% endif %}{% if max_stock %}&max_stock={{ max_stock }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">{{ num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
                         
                         {% if products.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ products.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">Suivant</a>
+                                <a class="page-link" href="?page={{ products.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if glass_type %}&glass_type={{ glass_type }}{% endif %}{% if thickness %}&thickness={{ thickness }}{% endif %}{% if unit %}&unit={{ unit }}{% endif %}{% if min_selling_price %}&min_selling_price={{ min_selling_price }}{% endif %}{% if max_selling_price %}&max_selling_price={{ max_selling_price }}{% endif %}{% if min_cost_price %}&min_cost_price={{ min_cost_price }}{% endif %}{% if max_cost_price %}&max_cost_price={{ max_cost_price }}{% endif %}{% if min_stock %}&min_stock={{ min_stock }}{% endif %}{% if max_stock %}&max_stock={{ max_stock }}{% endif %}{% if low_stock %}&low_stock=on{% endif %}">Suivant</a>
                             </li>
                         {% endif %}
                     </ul>
@@ -161,8 +252,8 @@
                 <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun produit trouvé</h5>
                 <p class="text-muted">
-                    {% if search %}
-                        Aucun produit ne correspond à votre recherche.
+                    {% if search or glass_type or thickness or unit or min_selling_price or max_selling_price or min_cost_price or max_cost_price or min_stock or max_stock %}
+                        Aucun produit ne correspond aux critères de filtre sélectionnés.
                     {% else %}
                         Commencez par ajouter votre premier produit en verre.
                     {% endif %}

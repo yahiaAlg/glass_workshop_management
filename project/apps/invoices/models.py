@@ -176,4 +176,4 @@ class Payment(models.Model):
         ordering = ['-payment_date']
     
     def __str__(self):
-        return f"Paiement {self.invoice.invoice_number} - {self.amount}€"
+        return f"Paiement {self.invoice.invoice_number} - {self.amount}DA"
