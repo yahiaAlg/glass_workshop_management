@@ -57,7 +57,9 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="Commande")
     product = models.ForeignKey(GlassProduct, on_delete=models.CASCADE, verbose_name="Produit")
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Quantité")
+    width = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Largeur (cm)")
+    height = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Hauteur (cm)")
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1, verbose_name="Quantité")
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix unitaire")
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Sous-total")
     notes = models.TextField(blank=True, verbose_name="Notes")
@@ -68,8 +70,13 @@ class OrderItem(models.Model):
         verbose_name = "Article de commande"
         verbose_name_plural = "Articles de commande"
     
+    @property
+    def surface(self):
+        return (self.width * self.height) / 10000  # Convert cm² to m²
+    
     def save(self, *args, **kwargs):
-        self.subtotal = self.quantity * self.unit_price
+        # Calculate subtotal based on surface area
+        self.subtotal = self.surface * self.quantity * self.unit_price
         super().save(*args, **kwargs)
         self.order.calculate_total()
     

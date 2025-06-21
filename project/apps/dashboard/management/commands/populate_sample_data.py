@@ -399,9 +399,14 @@ class Command(BaseCommand):
             
             for product in selected_products:
                 quantity = Decimal(str(random.uniform(1, 10))).quantize(Decimal('0.01'))
+                width = Decimal(str(random.randint(80, 200)))  # Width in cm
+                height = Decimal(str(random.randint(100, 250)))  # Height in cm
+                
                 OrderItem.objects.create(
                     order=order,
                     product=product,
+                    width=width,
+                    height=height,
                     quantity=quantity,
                     unit_price=product.selling_price,
                     notes=random.choice(['', 'Découpe sur mesure', 'Installation incluse'])

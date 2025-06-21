@@ -19,10 +19,12 @@ class OrderForm(forms.ModelForm):
 class OrderItemForm(forms.ModelForm):
     class Meta:
         model = OrderItem
-        fields = ['product', 'quantity', 'unit_price', 'notes']
+        fields = ['product', 'width', 'height', 'quantity', 'unit_price', 'notes']
         widgets = {
             'product': forms.Select(attrs={'class': 'form-select'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'width': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'height': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'value': '1'}),
             'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'notes': forms.TextInput(attrs={'class': 'form-control'}),
         }
@@ -30,3 +32,6 @@ class OrderItemForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['product'].queryset = GlassProduct.objects.filter(status='active')
+        # Set initial value for quantity
+        if not self.instance.pk:  # For new items only
+            self.fields['quantity'].initial = 1

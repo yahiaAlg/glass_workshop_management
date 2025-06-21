@@ -98,7 +98,7 @@ class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, verbose_name="Facture")
     product = models.ForeignKey(GlassProduct, on_delete=models.CASCADE, verbose_name="Produit")
     description = models.TextField(verbose_name="Description")
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Quantité")
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Quantité", default=1)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix unitaire")
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Sous-total")
     
@@ -112,9 +112,20 @@ class InvoiceItem(models.Model):
     class Meta:
         verbose_name = "Article de facture"
         verbose_name_plural = "Articles de facture"
+    # add surface property 
+    @property
+    def surface(self):
+        if self.width and self.height:
+            return (self.width * self.height) / 10000
+        return None
+    # add surface property end
+    def __str__(self):
+        return f"{self.product.name} - {self.quantity} x {self.unit_price}"
     
     def save(self, *args, **kwargs):
-        self.subtotal = self.quantity * self.unit_price
+        # sub total  = surface * prix unitaire * quantité
+        self.subtotal = self.surface * self.unit_price * self.quantity
+        print(self.subtotal)
         super().save(*args, **kwargs)
         self.invoice.calculate_totals()
 
