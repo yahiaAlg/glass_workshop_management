@@ -128,7 +128,7 @@
                 </div>
             </div>
         </div>
-        
+        <!-- action rapides -->
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Actions rapides</h5>
@@ -140,6 +140,9 @@
                     </a>
                     <a href="{% url 'invoices:create' %}?customer_id={{ customer.pk }}" class="btn btn-outline-success">
                         <i class="fas fa-file-invoice me-1"></i>Nouvelle Facture
+                    </a>
+                    <a href="{% url 'orders:list' %}?customer={{ customer.pk }}" class="btn btn-outline-info">
+                        <i class="fas fa-list me-1"></i>Voir les Commandes
                     </a>
                 </div>
             </div>

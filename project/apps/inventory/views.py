@@ -18,6 +18,11 @@ def product_list(request):
             Q(code__icontains=search)
         )
     
+    # Filter by supplier
+    supplier_id = request.GET.get('supplier')
+    if supplier_id:
+        products = products.filter(supplier_id=supplier_id)
+    
     # Filter by glass type
     glass_type = request.GET.get('glass_type')
     if glass_type:
@@ -97,9 +102,21 @@ def product_list(request):
     thickness_choices = GlassProduct.THICKNESS_CHOICES
     unit_choices = GlassProduct.UNIT_CHOICES
     
+    # Get supplier name if filtering by supplier
+    supplier_name = None
+    if supplier_id:
+        try:
+            from apps.suppliers.models import Supplier
+            supplier = Supplier.objects.get(pk=supplier_id)
+            supplier_name = supplier.name
+        except (ImportError, Supplier.DoesNotExist):
+            pass
+    
     context = {
         'products': products,
         'search': search,
+        'supplier_id': supplier_id,
+        'supplier_name': supplier_name,
         'glass_type': glass_type,
         'thickness': thickness,
         'unit': unit,

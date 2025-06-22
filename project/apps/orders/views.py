@@ -11,6 +11,12 @@ from .forms import OrderForm, OrderItemForm
 @login_required
 def order_list(request):
     orders = Order.objects.select_related('customer').all().order_by('-created_at')
+
+    # Add this to your order_list view
+    customer_filter = request.GET.get('customer')
+    if customer_filter:
+        orders = orders.filter(customer_id=customer_filter)
+
     
     # Text search functionality (order number and customer name)
     search = request.GET.get('search')

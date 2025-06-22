@@ -12,21 +12,17 @@
 
 <!-- Search and Filters -->
 <div class="card mb-3">
-    <div class="card-header">
-        <h6 class="card-title mb-0">
-            <i class="fas fa-filter me-2"></i>Recherche et Filtres
-        </h6>
-    </div>
     <div class="card-body">
         <form method="get" class="row g-3">
             <!-- Text Search -->
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <label for="search" class="form-label">Recherche</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" id="search" name="search" placeholder="Numéro de facture ou nom client..." {% if search %}value="{{ search }}"{% endif %}>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           placeholder="Numéro de facture ou nom du client..." 
+                           {% if search %}value="{{ search }}"{% endif %}>
                 </div>
-                <small class="form-text text-muted">Recherche dans les numéros de facture et noms de clients</small>
             </div>
             
             <!-- Status Filter -->
@@ -40,63 +36,83 @@
                 </select>
             </div>
             
-            <!-- Invoice Date Range -->
-            <div class="col-md-5">
-                <label class="form-label">Date de facture</label>
-                <div class="row g-2">
-                    <div class="col">
-                        <input type="date" class="form-control" name="invoice_date_from" placeholder="Du" {% if invoice_date_from %}value="{{ invoice_date_from }}"{% endif %}>
-                        <small class="form-text text-muted">Du</small>
-                    </div>
-                    <div class="col">
-                        <input type="date" class="form-control" name="invoice_date_to" placeholder="Au" {% if invoice_date_to %}value="{{ invoice_date_to }}"{% endif %}>
-                        <small class="form-text text-muted">Au</small>
-                    </div>
-                </div>
+            <!-- Toggle Advanced Filters -->
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" 
+                        data-bs-target="#advancedFilters" aria-expanded="false">
+                    <i class="fas fa-filter me-1"></i>Filtres avancés
+                </button>
             </div>
             
-            <!-- Due Date Range -->
-            <div class="col-md-5">
-                <label class="form-label">Date d'échéance</label>
-                <div class="row g-2">
-                    <div class="col">
-                        <input type="date" class="form-control" name="due_date_from" placeholder="Du" {% if due_date_from %}value="{{ due_date_from }}"{% endif %}>
-                        <small class="form-text text-muted">Du</small>
+            <!-- Advanced Filters (Collapsible) -->
+            <div class="collapse" id="advancedFilters">
+                <div class="row g-3 mt-2 pt-3 border-top">
+                    <!-- Invoice Date Range -->
+                    <div class="col-md-6">
+                        <label class="form-label">Date de facture</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="date" class="form-control" name="invoice_date_from" 
+                                       placeholder="Du" {% if invoice_date_from %}value="{{ invoice_date_from }}"{% endif %}>
+                            </div>
+                            <div class="col-auto align-self-center">
+                                <span class="text-muted">au</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" class="form-control" name="invoice_date_to" 
+                                       placeholder="Au" {% if invoice_date_to %}value="{{ invoice_date_to }}"{% endif %}>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col">
-                        <input type="date" class="form-control" name="due_date_to" placeholder="Au" {% if due_date_to %}value="{{ due_date_to }}"{% endif %}>
-                        <small class="form-text text-muted">Au</small>
+                    
+                    <!-- Due Date Range -->
+                    <div class="col-md-6">
+                        <label class="form-label">Date d'échéance</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="date" class="form-control" name="due_date_from" 
+                                       placeholder="Du" {% if due_date_from %}value="{{ due_date_from }}"{% endif %}>
+                            </div>
+                            <div class="col-auto align-self-center">
+                                <span class="text-muted">au</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" class="form-control" name="due_date_to" 
+                                       placeholder="Au" {% if due_date_to %}value="{{ due_date_to }}"{% endif %}>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Amount Range -->
-            <div class="col-md-4">
-                <label class="form-label">Montant (DA)</label>
-                <div class="row g-2">
-                    <div class="col">
-                        <input type="number" class="form-control" name="amount_min" placeholder="Min" step="0.01" {% if amount_min %}value="{{ amount_min }}"{% endif %}>
-                        <small class="form-text text-muted">Minimum</small>
-                    </div>
-                    <div class="col">
-                        <input type="number" class="form-control" name="amount_max" placeholder="Max" step="0.01" {% if amount_max %}value="{{ amount_max }}"{% endif %}>
-                        <small class="form-text text-muted">Maximum</small>
+                    
+                    <!-- Amount Range -->
+                    <div class="col-md-6">
+                        <label class="form-label">Montant (DA)</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="number" class="form-control" name="amount_min" step="0.01"
+                                       placeholder="Minimum" {% if amount_min %}value="{{ amount_min }}"{% endif %}>
+                            </div>
+                            <div class="col-auto align-self-center">
+                                <span class="text-muted">à</span>
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" name="amount_max" step="0.01"
+                                       placeholder="Maximum" {% if amount_max %}value="{{ amount_max }}"{% endif %}>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <!-- Action Buttons -->
-            <div class="col-md-3 d-flex align-items-end">
-                <div class="d-grid gap-2 d-md-flex">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search me-1"></i>Filtrer
-                    </button>
-                    {% if search or status or invoice_date_from or invoice_date_to or due_date_from or due_date_to or amount_min or amount_max %}
-                        <a href="{% url 'invoices:list' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i>Effacer
-                        </a>
-                    {% endif %}
-                </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Filtrer
+                </button>
+                {% if search or status or invoice_date_from or invoice_date_to or due_date_from or due_date_to or amount_min or amount_max %}
+                    <a href="{% url 'invoices:list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Effacer tous les filtres
+                    </a>
+                {% endif %}
             </div>
         </form>
     </div>
@@ -104,36 +120,34 @@
 
 <!-- Active Filters Display -->
 {% if search or status or invoice_date_from or invoice_date_to or due_date_from or due_date_to or amount_min or amount_max %}
-<div class="card mb-3">
-    <div class="card-body py-2">
-        <small class="text-muted">Filtres actifs :</small>
-        <div class="d-flex flex-wrap gap-1 mt-1">
-            {% if search %}
-                <span class="badge bg-info">Recherche: "{{ search }}"</span>
-            {% endif %}
-            {% if status %}
-                <span class="badge bg-primary">Statut: {{ status|title }}</span>
-            {% endif %}
-            {% if invoice_date_from %}
-                <span class="badge bg-success">Date facture ≥ {{ invoice_date_from }}</span>
-            {% endif %}
-            {% if invoice_date_to %}
-                <span class="badge bg-success">Date facture ≤ {{ invoice_date_to }}</span>
-            {% endif %}
-            {% if due_date_from %}
-                <span class="badge bg-warning">Échéance ≥ {{ due_date_from }}</span>
-            {% endif %}
-            {% if due_date_to %}
-                <span class="badge bg-warning">Échéance ≤ {{ due_date_to }}</span>
-            {% endif %}
-            {% if amount_min %}
-                <span class="badge bg-secondary">Montant ≥ {{ amount_min }}DA</span>
-            {% endif %}
-            {% if amount_max %}
-                <span class="badge bg-secondary">Montant ≤ {{ amount_max }}DA</span>
-            {% endif %}
-        </div>
-    </div>
+<div class="alert alert-info">
+    <strong>Filtres actifs:</strong>
+    {% if search %}<span class="badge bg-primary me-1">Recherche: "{{ search }}"</span>{% endif %}
+    {% if status %}<span class="badge bg-secondary me-1">Statut: {{ status|capfirst }}</span>{% endif %}
+    {% if invoice_date_from or invoice_date_to %}
+        <span class="badge bg-info me-1">
+            Date facture: 
+            {% if invoice_date_from %}{{ invoice_date_from }}{% else %}...{% endif %} 
+            - 
+            {% if invoice_date_to %}{{ invoice_date_to }}{% else %}...{% endif %}
+        </span>
+    {% endif %}
+    {% if due_date_from or due_date_to %}
+        <span class="badge bg-success me-1">
+            Date échéance: 
+            {% if due_date_from %}{{ due_date_from }}{% else %}...{% endif %} 
+            - 
+            {% if due_date_to %}{{ due_date_to }}{% else %}...{% endif %}
+        </span>
+    {% endif %}
+    {% if amount_min or amount_max %}
+        <span class="badge bg-warning me-1">
+            Montant: 
+            {% if amount_min %}{{ amount_min }}DA{% else %}0DA{% endif %} 
+            - 
+            {% if amount_max %}{{ amount_max }}DA{% else %}∞{% endif %}
+        </span>
+    {% endif %}
 </div>
 {% endif %}
 
