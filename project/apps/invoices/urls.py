@@ -11,4 +11,6 @@ urlpatterns = [
     path('<int:pk>/delete/', views.invoice_delete, name='delete'),
     path('<int:pk>/print/', views.invoice_print, name='print'),
     path('<int:pk>/add-payment/', views.add_payment, name='add_payment'),
+    # In your urls.py
+    path('api/products/', views.products_api, name='products_api'),
 ]

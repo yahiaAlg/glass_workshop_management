@@ -317,4 +317,36 @@ def add_payment(request, pk):
     
     return render(request, 'invoices/add_payment.html', {'form': form, 'invoice': invoice})
 
-# yousef derraji
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from apps.inventory.models import GlassProduct
+
+@login_required
+def products_api(request):
+    """API endpoint to return products data for AJAX requests"""
+    products = GlassProduct.objects.filter(status='active').values(
+        'id', 
+        'name', 
+        'selling_price', 
+        'thickness',
+        'unit',
+        'color',
+        'glass_type',
+        'finish'
+    )
+    
+    # Convert queryset to list and format data
+    products_list = []
+    for product in products:
+        products_list.append({
+            'id': product['id'],
+            'name': product['name'],
+            'selling_price': float(product['selling_price']),
+            'thickness': product['thickness'],
+            'unit': product['unit'],
+            'color': product['color'],
+            'glass_type': product['glass_type'],
+            'finish': product['finish']
+        })
+    
+    return JsonResponse(products_list, safe=False)
