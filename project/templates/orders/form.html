@@ -26,7 +26,7 @@
                             <label for="{{ form.customer.id_for_label }}" class="form-label">{{ form.customer.label }} *</label>
                             {{ form.customer }}
                             {% if form.customer.errors %}
-                                <div class="text-danger lgall">{{ form.customer.errors.0 }}</div>
+                                <div class="text-danger small">{{ form.customer.errors.0 }}</div>
                             {% endif %}
                         </div>
                         <div class="col-lg-3 mb-3">
@@ -66,7 +66,7 @@
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Articles de la Commande</h5>
-                    <button type="button" class="btn btn-lg btn-outline-primary" onclick="addOrderItem()">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOrderItem()">
                         <i class="fas fa-plus me-1"></i>Ajouter un article
                     </button>
                 </div>
@@ -74,7 +74,6 @@
                     <div id="order-items">
                         {{ formset.management_form }}
                         {% for form in formset %}
-                            <!-- Inside the order item section -->
                             <div class="order-item border rounded p-3 mb-3">
                                 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
                                 <div class="row">
@@ -92,7 +91,6 @@
                                     </div>
                                 </div>
                                 <div class="row">
-
                                     <div class="col-lg-6 mb-2">
                                         <label class="form-label">Quantité</label>
                                         {{ form.quantity }}
@@ -170,8 +168,74 @@
 
 <script>
     let itemFormCount = {{ formset.total_form_count }};
+    let productsData = {}; // Cache for products data
 
+    // Load products data on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProductsData();
+        
+        // Add classes to existing form elements
+        document.querySelectorAll('select[name$="-product"]').forEach(select => {
+            select.classList.add('product-select');
+        });
+        
+        document.querySelectorAll('input[name$="-width"], input[name$="-height"]').forEach(input => {
+            input.classList.add('dimension-input');
+        });
+        
+        document.querySelectorAll('input[name$="-quantity"]').forEach(input => {
+            input.classList.add('quantity-input');
+        });
+        
+        document.querySelectorAll('input[name$="-unit_price"]').forEach(input => {
+            input.classList.add('price-input');
+        });
+        
+        // Initial calculation for existing items
+        document.querySelectorAll('.order-item').forEach(item => {
+            calculateItemSubtotal(item);
+        });
+        
+        calculateTotals();
+    });
 
+    // Function to load products data via AJAX
+    function loadProductsData() {
+        fetch("{% url 'inventory:products_api' %}")
+            .then(response => response.json())
+            .then(data => {
+                productsData = {};
+                data.forEach(product => {
+                    productsData[product.id] = product;
+                });
+            })
+            .catch(error => {
+                console.error('Error loading products data:', error);
+            });
+    }
+
+    // Enhanced product selection handler with AJAX data
+    function handleProductChange(productSelect) {
+        const productId = productSelect.value;
+        const itemContainer = productSelect.closest('.order-item');
+        const priceInput = itemContainer.querySelector('input[name$="-unit_price"]');
+        
+        if (productId && productsData[productId]) {
+            const product = productsData[productId];
+            priceInput.value = product.selling_price;
+            calculateItemSubtotal(itemContainer);
+        } else if (!productId) {
+            priceInput.value = '';
+            calculateItemSubtotal(itemContainer);
+        }
+    }
+
+    // Event delegation for product selection changes
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('product-select') || (e.target.name && e.target.name.includes('-product'))) {
+            handleProductChange(e.target);
+        }
+    });
 
     function removeOrderItem(button) {
         const item = button.closest('.order-item');
@@ -187,7 +251,6 @@
         calculateTotals();
     }
 
-    // Update the addOrderItem function to include width and height fields
     function addOrderItem() {
         const container = document.getElementById('order-items');
         const totalForms = document.getElementById('id_form-TOTAL_FORMS');
@@ -197,31 +260,28 @@
                 <div class="row">
                     <div class="col-md-4 mb-2">
                         <label class="form-label">Produit</label>
-                        <select name="form-${itemFormCount}-product" class="form-select" id="id_form-${itemFormCount}-product">
+                        <select name="form-${itemFormCount}-product" class="form-select product-select" id="id_form-${itemFormCount}-product">
                             <option value="">---------</option>
-                            {% for product in formset.form.product.field.queryset %}
-                            <option value="{{ product.pk }}">{{ product.name }} - {{ product.selling_price }}DA</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-2 mb-2">
                         <label class="form-label">Largeur (cm)</label>
-                        <input type="number" name="form-${itemFormCount}-width" step="0.1" class="form-control" id="id_form-${itemFormCount}-width">
+                        <input type="number" name="form-${itemFormCount}-width" step="0.1" class="form-control dimension-input" id="id_form-${itemFormCount}-width">
                     </div>
                     <div class="col-md-2 mb-2">
                         <label class="form-label">Hauteur (cm)</label>
-                        <input type="number" name="form-${itemFormCount}-height" step="0.1" class="form-control" id="id_form-${itemFormCount}-height">
+                        <input type="number" name="form-${itemFormCount}-height" step="0.1" class="form-control dimension-input" id="id_form-${itemFormCount}-height">
                     </div>
                     <div class="col-md-1 mb-2">
                         <label class="form-label">Quantité</label>
-                        <input type="number" name="form-${itemFormCount}-quantity" step="0.01" class="form-control" id="id_form-${itemFormCount}-quantity" value="1">
+                        <input type="number" name="form-${itemFormCount}-quantity" step="0.01" class="form-control quantity-input" id="id_form-${itemFormCount}-quantity" value="1">
                     </div>
                     <div class="col-md-2 mb-2">
                         <label class="form-label">Prix unitaire</label>
-                        <input type="number" name="form-${itemFormCount}-unit_price" step="0.01" class="form-control" id="id_form-${itemFormCount}-unit_price">
+                        <input type="number" name="form-${itemFormCount}-unit_price" step="0.01" class="form-control price-input" id="id_form-${itemFormCount}-unit_price">
                     </div>
                     <div class="col-md-1 mb-2 d-flex align-items-end">
-                        <button type="button" class="btn btn-outline-danger btn-lg" onclick="removeOrderItem(this)">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeOrderItem(this)">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -244,9 +304,28 @@
         `;
         
         container.insertAdjacentHTML('beforeend', newForm);
+        
+        // Populate the product dropdown for the new item
+        const newProductSelect = document.getElementById(`id_form-${itemFormCount}-product`);
+        populateProductSelect(newProductSelect);
+        
         itemFormCount++;
         totalForms.value = itemFormCount;
         calculateTotals();
+    }
+
+    // Function to populate product dropdown with AJAX data
+    function populateProductSelect(selectElement) {
+        // Clear existing options except the first one
+        selectElement.innerHTML = '<option value="">---------</option>';
+        
+        // Add products from cached data
+        Object.values(productsData).forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = `${product.name} - ${product.selling_price}DA`;
+            selectElement.appendChild(option);
+        });
     }
 
     // Calculate surface area
@@ -295,7 +374,7 @@
         document.getElementById('total-amount').textContent = totalAmount.toFixed(2) + 'DA';
     }
 
-    // Recalculate on input changes
+    // Event listeners for calculation updates
     document.addEventListener('input', function(e) {
         if (e.target.name && (
             e.target.name.includes('-width') || 
@@ -306,35 +385,6 @@
             const itemContainer = e.target.closest('.order-item');
             calculateItemSubtotal(itemContainer);
         }
-    });
-
-    // Auto-fill product details when product is selected
-    document.addEventListener('change', function(e) {
-        if (e.target.name && e.target.name.includes('-product')) {
-            const productSelect = e.target;
-            const itemContainer = productSelect.closest('.order-item');
-            const priceInput = itemContainer.querySelector('input[name$="-unit_price"]');
-            
-            if (productSelect.value) {
-                // Get product price from the selected option text
-                const selectedOption = productSelect.options[productSelect.selectedIndex];
-                const optionText = selectedOption.text;
-                const price = optionText.split(' - ')[1]?.replace('DA', '');
-                
-                if (price) {
-                    priceInput.value = price;
-                }
-            }
-            calculateItemSubtotal(itemContainer);
-        }
-    });
-
-
-    // Initial calculation
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.order-item').forEach(item => {
-            calculateItemSubtotal(item);
-        });
     });
 </script>
 {% endblock %}

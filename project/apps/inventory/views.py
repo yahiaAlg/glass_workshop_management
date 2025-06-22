@@ -185,3 +185,40 @@ def product_delete(request, pk):
 def low_stock_alert(request):
     low_stock_products = [p for p in GlassProduct.objects.filter(status='active') if p.is_low_stock()]
     return render(request, 'inventory/low_stock.html', {'products': low_stock_products})
+
+
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from apps.inventory.models import GlassProduct
+
+@login_required
+def products_api(request):
+    """API endpoint to return products data for AJAX requests"""
+    products = GlassProduct.objects.filter(status='active').values(
+        'id', 
+        'name', 
+        'selling_price', 
+        'thickness',
+        'unit',
+        'color',
+        'glass_type',
+        'finish'
+    )
+    
+    # Convert queryset to list and format data
+    products_list = []
+    for product in products:
+        products_list.append({
+            'id': product['id'],
+            'name': product['name'],
+            'selling_price': float(product['selling_price']),
+            'thickness': product['thickness'],
+            'unit': product['unit'],
+            'color': product['color'],
+            'glass_type': product['glass_type'],
+            'finish': product['finish']
+        })
+    
+    return JsonResponse(products_list, safe=False)
