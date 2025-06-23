@@ -18,21 +18,21 @@
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:sales_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Ventes par période</h6>
                             <small class="text-muted">Journalier, mensuel, annuel</small>
                         </div>
                         <p class="mb-1">Analyse des ventes sur différentes périodes avec graphiques.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:sales_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Top produits</h6>
                             <small class="text-muted">Produits les plus vendus</small>
                         </div>
                         <p class="mb-1">Classement des produits par quantité et chiffre d'affaires.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:sales_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Performance par client</h6>
                             <small class="text-muted">Analyse clientèle</small>
@@ -58,14 +58,14 @@
                         </div>
                         <p class="mb-1">Produits nécessitant un réapprovisionnement.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:inventory_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Valorisation du stock</h6>
                             <small class="text-muted">Valeur totale</small>
                         </div>
                         <p class="mb-1">Valeur du stock au prix de revient et de vente.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:inventory_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Rotation des stocks</h6>
                             <small class="text-muted">Analyse de rotation</small>
@@ -86,21 +86,21 @@
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:financial_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Factures impayées</h6>
                             <small class="text-danger">Créances</small>
                         </div>
                         <p class="mb-1">Liste des factures en attente de paiement.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:financial_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Chiffre d'affaires</h6>
                             <small class="text-muted">CA mensuel/annuel</small>
                         </div>
                         <p class="mb-1">Évolution du chiffre d'affaires avec comparaisons.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:financial_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Marges bénéficiaires</h6>
                             <small class="text-muted">Analyse des marges</small>
@@ -119,21 +119,21 @@
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:customer_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Nouveaux clients</h6>
                             <small class="text-success">Acquisition</small>
                         </div>
                         <p class="mb-1">Évolution du nombre de nouveaux clients.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:customer_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Fidélité clientèle</h6>
                             <small class="text-muted">Rétention</small>
                         </div>
                         <p class="mb-1">Analyse de la fidélité et fréquence d'achat.</p>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'dashboard:customer_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">Segmentation</h6>
                             <small class="text-muted">Particuliers vs Entreprises</small>
@@ -154,29 +154,29 @@
     <div class="card-body">
         <div class="row">
             <div class="col-md-3 mb-2">
-                <button class="btn btn-outline-primary w-100" disabled>
+                <a href="{% url 'dashboard:export_sales_excel' %}" class="btn btn-outline-primary w-100">
                     <i class="fas fa-file-excel me-1"></i>Export Excel
-                </button>
+                </a>
             </div>
             <div class="col-md-3 mb-2">
-                <button class="btn btn-outline-danger w-100" disabled>
+                <a href="{% url 'dashboard:export_financial_pdf' %}" class="btn btn-outline-danger w-100">
                     <i class="fas fa-file-pdf me-1"></i>Export PDF
-                </button>
+                </a>
             </div>
             <div class="col-md-3 mb-2">
-                <button class="btn btn-outline-success w-100" disabled>
+                <a href="{% url 'dashboard:export_customers_csv' %}" class="btn btn-outline-success w-100">
                     <i class="fas fa-file-csv me-1"></i>Export CSV
-                </button>
+                </a>
             </div>
             <div class="col-md-3 mb-2">
-                <button class="btn btn-outline-info w-100" disabled>
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
                     <i class="fas fa-print me-1"></i>Imprimer
                 </button>
             </div>
         </div>
         <small class="text-muted">
             <i class="fas fa-info-circle me-1"></i>
-            Les fonctionnalités d'export seront disponibles dans une prochaine version.
+            Sélectionnez le format d'export souhaité pour télécharger vos rapports.
         </small>
     </div>
 </div>

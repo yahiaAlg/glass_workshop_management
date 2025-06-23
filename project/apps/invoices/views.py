@@ -261,11 +261,18 @@ def invoice_detail(request, pk):
     items = invoice.invoiceitem_set.all()
     services = invoice.invoiceservice_set.all()
     payments = invoice.payment_set.all()
+    
+    # Calculate total payments
+    total_payments = sum(p.amount for p in payments.filter(status='completed'))
+    remaining_amount = invoice.total_amount - total_payments
+    
     return render(request, 'invoices/detail.html', {
         'invoice': invoice, 
         'items': items, 
         'services': services,
-        'payments': payments
+        'payments': payments,
+        'total_payments': total_payments,
+        'remaining_amount': remaining_amount
     })
 
 @login_required

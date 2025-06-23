@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapports Financiers - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-chart-line me-2"></i>Rapports Financiers</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'dashboard:export_financial_pdf' %}?start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-outline-danger">
+                <i class="fas fa-file-pdf me-1"></i>Export PDF
+            </a>
+        </div>
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">Date de début</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">Date de fin</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Financial Summary -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card success">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                <h4 class="mb-0">{{ financial_summary.total_revenue|floatformat:2 }} DA</h4>
+                <small>Chiffre d'affaires</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card warning">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h4 class="mb-0">{{ financial_summary.outstanding_amount|floatformat:2 }} DA</h4>
+                <small>Créances en cours</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-file-invoice fa-2x mb-2"></i>
+                <h4 class="mb-0">{{ financial_summary.paid_invoices }}</h4>
+                <small>Factures payées</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card danger">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <h4 class="mb-0">{{ financial_summary.outstanding_invoices }}</h4>
+                <small>Factures impayées</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Revenue Trend Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-area me-2"></i>Évolution du Chiffre d'Affaires</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-calculator me-2"></i>Indicateurs Clés</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Taux de recouvrement</span>
+                        <strong class="text-success">{{ collection_rate|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar bg-success" style="width: {{ collection_rate|floatformat:0|add:0|default:0 }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Marge brute</span>
+                        <strong class="{% if profit_margin > 0 %}text-success{% else %}text-danger{% endif %}">{{ profit_margin|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress mt-1">
+                        {% with margin_width=profit_margin|floatformat:0|add:0|default:0 %}
+                            {% if margin_width > 100 %}
+                                <div class="progress-bar {% if profit_margin > 0 %}bg-success{% else %}bg-danger{% endif %}" style="width: 100%"></div>
+                            {% elif margin_width < 0 %}
+                                <div class="progress-bar bg-danger" style="width: 0%"></div>
+                            {% else %}
+                                <div class="progress-bar {% if profit_margin > 0 %}bg-success{% else %}bg-danger{% endif %}" style="width: {{ margin_width }}%"></div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Bénéfice brut</span>
+                        <strong class="{% if gross_profit > 0 %}text-success{% else %}text-danger{% endif %}">{{ gross_profit|floatformat:2 }} DA</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .progress {
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .progress-bar {
+        transition: width 0.3s ease;
+        min-width: 2%;
+    }
+    </style>
+</div>
+
+<!-- Overdue Invoices -->
+{% if overdue_invoices %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle me-2 text-danger"></i>Factures en Retard</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>N° Facture</th>
+                        <th>Client</th>
+                        <th>Date d'échéance</th>
+                        <th>Montant</th>
+                        <th>Jours de retard</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in overdue_invoices %}
+                    <tr>
+                        <td>{{ invoice.invoice_number }}</td>
+                        <td>{{ invoice.customer.name }}</td>
+                        <td>{{ invoice.due_date|date:"d/m/Y" }}</td>
+                        <td>{{ invoice.total_amount|floatformat:2 }} DA</td>
+                        <td>
+                            {% with days_overdue=invoice.days_overdue %}
+                            <span class="badge {% if days_overdue > 30 %}bg-danger{% elif days_overdue > 7 %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ days_overdue }} jour{{ days_overdue|pluralize }}
+                            </span>
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <a href="{% url 'invoices:detail' invoice.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const monthlyRevenue = {{ monthly_revenue|safe }};
+    
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: monthlyRevenue.map(item => {
+                const date = new Date(item.month);
+                return date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+            }),
+            datasets: [{
+                label: 'Chiffre d\'affaires (DA)',
+                data: monthlyRevenue.map(item => item.revenue),
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('fr-FR') + ' DA';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

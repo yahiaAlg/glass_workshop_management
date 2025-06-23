@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapports d'Inventaire - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-boxes me-2"></i>Rapports d'Inventaire</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'dashboard:export_inventory_excel' %}" class="btn btn-outline-success">
+                <i class="fas fa-file-excel me-1"></i>Export Excel
+            </a>
+        </div>
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<!-- Métriques principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ total_products }}</h3>
+                <p class="mb-0">Produits actifs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card success">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ stock_value_selling|floatformat:2 }} DA</h3>
+                <p class="mb-0">Valeur stock (vente)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card warning">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ stock_value_cost|floatformat:2 }} DA</h3>
+                <p class="mb-0">Valeur stock (coût)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card danger">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ potential_profit|floatformat:2 }} DA</h3>
+                <p class="mb-0">Marge potentielle</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertes stock -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h2 class="text-danger">{{ stock_alerts.out_of_stock }}</h2>
+                <p class="mb-0">Produits en rupture</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h2 class="text-warning">{{ stock_alerts.low_stock }}</h2>
+                <p class="mb-0">Stock faible</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h2 class="text-success">{{ stock_alerts.good_stock }}</h2>
+                <p class="mb-0">Stock correct</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Stock par catégorie -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Stock par Type de Verre</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="stockCategoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produits à faible stock -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Stock Faible</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Stock</th>
+                                <th>Min</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_products %}
+                            <tr class="{% if product.stock_quantity == 0 %}table-danger{% else %}table-warning{% endif %}">
+                                <td>
+                                    <strong>{{ product.name }}</strong><br>
+                                    <small class="text-muted">{{ product.code }}</small>
+                                </td>
+                                <td>{{ product.stock_quantity }} m²</td>
+                                <td>{{ product.minimum_stock }} m²</td>
+                                <td>
+                                    {% if product.stock_quantity == 0 %}
+                                        <span class="badge bg-danger">Rupture</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Faible</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-success">
+                                    <i class="fas fa-check-circle me-1"></i>Tous les stocks sont corrects
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance des produits -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Performance des Produits (90 derniers jours)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Stock Actuel</th>
+                        <th>Quantité Vendue</th>
+                        <th>CA Généré</th>
+                        <th>Rotation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in product_performance %}
+                    <tr>
+                        <td>
+                            <strong>{{ product.product__name }}</strong><br>
+                            <small class="text-muted">{{ product.product__code }}</small>
+                        </td>
+                        <td>{{ product.product__stock_quantity|floatformat:2 }} m²</td>
+                        <td>{{ product.sold_quantity|floatformat:2 }} m²</td>
+                        <td>{{ product.revenue|floatformat:2 }} DA</td>
+                        <td>
+                            {% if product.product__stock_quantity > 0 %}
+                                {% widthratio product.sold_quantity product.product__stock_quantity 100 %}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Aucune donnée de performance disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique du stock par catégorie
+const stockCategoryCtx = document.getElementById('stockCategoryChart').getContext('2d');
+new Chart(stockCategoryCtx, {
+    type: 'pie',
+    data: {
+        labels: [{% for category in stock_by_category %}'{{ category.glass_type }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for category in stock_by_category %}{{ category.total_value }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(37, 99, 235, 0.8)',
+                'rgba(15, 118, 110, 0.8)',
+                'rgba(220, 38, 38, 0.8)',
+                'rgba(5, 150, 105, 0.8)',
+                'rgba(217, 119, 6, 0.8)',
+                'rgba(147, 51, 234, 0.8)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': ' + context.parsed.toLocaleString() + ' DA';
+                    }
+                }
+            },
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

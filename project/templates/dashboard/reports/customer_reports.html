@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapports Clients - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<style>
+    .card-body canvas {
+        max-width: 100% !important;
+        max-height: 300px !important;
+    }
+</style>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-users me-2"></i>Rapports Clients</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'dashboard:export_customers_csv' %}" class="btn btn-outline-success">
+                <i class="fas fa-file-csv me-1"></i>Export CSV
+            </a>
+        </div>
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<!-- Customer Summary -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h4 class="mb-0">{{ total_customers }}</h4>
+                <small>Total clients</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card success">
+            <div class="card-body text-center">
+                <i class="fas fa-user-plus fa-2x mb-2"></i>
+                <h4 class="mb-0">{{ new_customers }}</h4>
+                <small>Nouveaux ce mois</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card warning">
+            <div class="card-body text-center">
+                <i class="fas fa-crown fa-2x mb-2"></i>
+                <h4 class="mb-0">{{ customer_segments.high_value }}</h4>
+                <small>Clients premium (50k+ DA)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <i class="fas fa-building fa-2x mb-2"></i>
+                <h4 class="mb-0">{% for type in customer_types %}{% if type.customer_type == 'commercial' %}{{ type.count }}{% endif %}{% endfor %}</h4>
+                <small>Clients entreprises</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Customer Acquisition Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Acquisition de Clients</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="acquisitionChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Type Distribution -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Répartition par Type</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="typeChart" width="200" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Customer Value Segmentation -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-layer-group me-2"></i>Segmentation par Valeur</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-success">{{ customer_segments.high_value }}</h4>
+                            <small class="text-muted">Premium<br>(50k+ DA)</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-warning">{{ customer_segments.medium_value }}</h4>
+                            <small class="text-muted">Régulier<br>(10k-50k DA)</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-secondary">{{ customer_segments.low_value }}</h4>
+                        <small class="text-muted">Occasionnel<br>(&lt;10k DA)</small>
+                    </div>
+                </div>
+                <canvas id="segmentChart" width="400" height="150" class="mt-3"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Frequency -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-2"></i>Fréquence d'Achat</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="frequencyChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Customers Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0"><i class="fas fa-trophy me-2"></i>Top 15 Clients</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Client</th>
+                        <th>Type</th>
+                        <th>Total Dépensé</th>
+                        <th>Nb Factures</th>
+                        <th>Facture Moyenne</th>
+                        <th>Premier Achat</th>
+                        <th>Dernier Achat</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in top_customers %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ customer.customer__name }}</strong>
+                            {% if customer.total_spent >= 50000 %}
+                            <span class="badge bg-warning ms-1">Premium</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {% if customer.customer__customer_type == 'commercial' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                {% if customer.customer__customer_type == 'commercial' %}Entreprise{% else %}Particulier{% endif %}
+                            </span>
+                        </td>
+                        <td><strong>{{ customer.total_spent|floatformat:2 }} DA</strong></td>
+                        <td>{{ customer.invoice_count }}</td>
+                        <td>{{ customer.avg_invoice|floatformat:2 }} DA</td>
+                        <td>{{ customer.first_purchase|date:"d/m/Y" }}</td>
+                        <td>{{ customer.last_purchase|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'customers:detail' customer.customer__id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">Aucun client trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Store chart instances to properly destroy them
+        let acquisitionChart, typeChart, segmentChart, frequencyChart;
+    
+        function initializeCharts() {
+            // Destroy existing charts if they exist
+            if (acquisitionChart) acquisitionChart.destroy();
+            if (typeChart) typeChart.destroy();
+            if (segmentChart) segmentChart.destroy();
+            if (frequencyChart) frequencyChart.destroy();
+    
+            // Customer Acquisition Chart
+            const acquisitionCtx = document.getElementById('acquisitionChart').getContext('2d');
+            const acquisitionData = {{ customer_acquisition|safe }};
+    
+            acquisitionChart = new Chart(acquisitionCtx, {
+                type: 'bar',
+                data: {
+                    labels: acquisitionData.map(item => {
+                        if (item.month) {
+                            const date = new Date(item.month);
+                            return date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+                        }
+                        return 'N/A';
+                    }),
+                    datasets: [{
+                        label: 'Nouveaux clients',
+                        data: acquisitionData.map(item => item.new_customers),
+                        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                        borderColor: '#2563eb',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+    
+            // Customer Type Distribution
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            const customerTypes = [
+                {% for type in customer_types %}
+                {
+                    type: '{{ type.customer_type }}',
+                    count: {{ type.count }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+            
+            typeChart = new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: customerTypes.map(item => item.type === 'individual' ? 'Particuliers' : 'Entreprises'),
+                    datasets: [{
+                        data: customerTypes.map(item => item.count),
+                        backgroundColor: ['#2563eb', '#059669'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+    
+            // Customer Segmentation Chart
+            const segmentCtx = document.getElementById('segmentChart').getContext('2d');
+            const segmentCanvas = document.getElementById('segmentChart');
+            
+            // Force canvas dimensions to prevent infinite growth
+            segmentCanvas.width = 400;
+            segmentCanvas.height = 150;
+            segmentCanvas.style.maxWidth = '400px';
+            segmentCanvas.style.maxHeight = '150px';
+            
+            const segments = {
+                high: {{ customer_segments.high_value }},
+                medium: {{ customer_segments.medium_value }},
+                low: {{ customer_segments.low_value }}
+            };
+            
+            segmentChart = new Chart(segmentCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Premium', 'Régulier', 'Occasionnel'],
+                    datasets: [{
+                        data: [segments.high, segments.medium, segments.low],
+                        backgroundColor: ['#059669', '#d97706', '#64748b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: false, // Disable responsive to prevent resizing
+                    maintainAspectRatio: true,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: Math.max(segments.high, segments.medium, segments.low) + 1
+                        }
+                    }
+                }
+            });
+    
+            // Purchase Frequency Chart
+            const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
+            const frequencyData = {{ purchase_frequency|safe }};
+            
+            frequencyChart = new Chart(frequencyCtx, {
+                type: 'bar',
+                data: {
+                    labels: frequencyData.map(item => item.purchase_count + ' achat' + (item.purchase_count > 1 ? 's' : '')),
+                    datasets: [{
+                        label: 'Nombre de clients',
+                        data: frequencyData.map(item => item.customer_count),
+                        backgroundColor: 'rgba(15, 118, 110, 0.7)',
+                        borderColor: '#0f766e',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    
+        // Initialize charts
+        initializeCharts();
+    
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (acquisitionChart) acquisitionChart.destroy();
+            if (typeChart) typeChart.destroy();
+            if (segmentChart) segmentChart.destroy();
+            if (frequencyChart) frequencyChart.destroy();
+        });
+    });
+</script>
+{% endblock %}

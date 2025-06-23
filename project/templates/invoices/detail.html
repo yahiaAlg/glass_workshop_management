@@ -270,19 +270,18 @@
                     </div>
                     {% endfor %}
                     
-                    {% with total_paid=payments|length %}
-                    {% if total_paid > 0 %}
                     <hr>
                     <div class="d-flex justify-content-between">
                         <strong>Total payé:</strong>
-                        <strong class="text-success">
-                            {% for payment in payments %}
-                                {% if payment.status == 'completed' %}{{ payment.amount|add:0 }}{% endif %}
-                            {% endfor %}DA
-                        </strong>
+                        <strong class="text-success">{{ total_payments|floatformat:2 }}DA</strong>
+                    </div>
+                    
+                    {% if total_payments < invoice.total_amount %}
+                    <div class="d-flex justify-content-between">
+                        <strong>Restant à payer:</strong>
+                        <strong class="text-warning">{{ remaining_amount|floatformat:2 }}DA</strong>
                     </div>
                     {% endif %}
-                    {% endwith %}
                 {% else %}
                     <p class="text-muted text-center">Aucun paiement enregistré</p>
                 {% endif %}

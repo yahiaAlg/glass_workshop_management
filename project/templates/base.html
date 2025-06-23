@@ -189,7 +189,7 @@
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:home' %}">
+                            <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' and request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
                                 <i class="fas fa-tachometer-alt me-2"></i>
                                 Tableau de Bord
                             </a>
@@ -222,6 +222,12 @@
                             <a class="nav-link {% if request.resolver_match.namespace == 'suppliers' %}active{% endif %}" href="{% url 'suppliers:list' %}">
                                 <i class="fas fa-truck me-2"></i>
                                 Fournisseurs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' and 'reports' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:reports' %}">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Rapports
                             </a>
                         </li>
                     </ul>

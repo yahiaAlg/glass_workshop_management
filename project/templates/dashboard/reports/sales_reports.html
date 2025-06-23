@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapports de Ventes - GlassWorks Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-chart-line me-2"></i>Rapports de Ventes</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'dashboard:export_sales_excel' %}?start_date={{ start_date }}&end_date={{ end_date }}" 
+               class="btn btn-outline-success">
+                <i class="fas fa-file-excel me-1"></i>Export Excel
+            </a>
+        </div>
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<!-- Filtres de période -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="period" class="form-label">Période</label>
+                <select name="period" id="period" class="form-select">
+                    <option value="week" {% if period == 'week' %}selected{% endif %}>Cette semaine</option>
+                    <option value="month" {% if period == 'month' %}selected{% endif %}>Ce mois</option>
+                    <option value="year" {% if period == 'year' %}selected{% endif %}>Cette année</option>
+                    <option value="custom" {% if period == 'custom' %}selected{% endif %}>Personnalisé</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Date début</label>
+                <input type="date" class="form-control" name="start_date" id="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Date fin</label>
+                <input type="date" class="form-control" name="end_date" id="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Résumé des ventes -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card success">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ sales_summary.total_revenue|floatformat:2 }} DA</h3>
+                <p class="mb-0">Chiffre d'affaires</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ sales_summary.total_invoices }}</h3>
+                <p class="mb-0">Factures payées</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card warning">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ sales_summary.average_invoice|floatformat:2 }} DA</h3>
+                <p class="mb-0">Panier moyen</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ sales_summary.total_customers }}</h3>
+                <p class="mb-0">Clients actifs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Graphique des ventes -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-area me-2"></i>Évolution des ventes</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition par type de client -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-pie-chart me-2"></i>Ventes par type client</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="customerTypeChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top produits -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-trophy me-2"></i>Top Produits</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Quantité</th>
+                                <th>CA</th>
+                                <th>Surface</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>
+                                    <strong>{{ product.product__name }}</strong><br>
+                                    <small class="text-muted">{{ product.product__code }}</small>
+                                </td>
+                                <td>{{ product.total_quantity|floatformat:2 }} m²</td>
+                                <td>{{ product.total_revenue|floatformat:2 }} DA</td>
+                                <td>{{ product.total_surface|floatformat:2 }} m²</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Aucune donnée disponible</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top clients -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-users me-2"></i>Top Clients</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>CA</th>
+                                <th>Factures</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in top_customers %}
+                            <tr>
+                                <td>{{ customer.customer__name }}</td>
+                                <td>{{ customer.total_spent|floatformat:2 }} DA</td>
+                                <td>{{ customer.invoice_count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique des ventes quotidiennes
+const salesCtx = document.getElementById('salesChart').getContext('2d');
+new Chart(salesCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for sale in daily_sales %}'{{ sale.day }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Chiffre d\'affaires (DA)',
+            data: [{% for sale in daily_sales %}{{ sale.revenue }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            borderColor: 'rgb(37, 99, 235)',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toLocaleString() + ' DA';
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'CA: ' + context.parsed.y.toLocaleString() + ' DA';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Graphique des types de clients
+const customerTypeCtx = document.getElementById('customerTypeChart').getContext('2d');
+new Chart(customerTypeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for sale in customer_type_sales %}'{% if sale.customer__customer_type == "individual" %}Particuliers{% else %}Entreprises{% endif %}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for sale in customer_type_sales %}{{ sale.revenue }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(37, 99, 235, 0.8)',
+                'rgba(15, 118, 110, 0.8)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': ' + context.parsed.toLocaleString() + ' DA';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

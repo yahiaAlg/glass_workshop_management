@@ -221,127 +221,129 @@ Simple payment management:
 
 ```
 .
-└── project/
-    ├── apps/
-    │   ├── authentication/
-    │   │   ├── admin.py
-    │   │   ├── apps.py
-    │   │   ├── forms.py
-    │   │   ├── migrations/
-    │   │   │   └── 0001_initial.py
-    │   │   ├── models.py
-    │   │   ├── urls.py
-    │   │   └── views.py
-    │   ├── company/
-    │   │   ├── admin.py
-    │   │   ├── apps.py
-    │   │   ├── forms.py
-    │   │   ├── migrations/
-    │   │   │   └── 0001_initial.py
-    │   │   ├── models.py
-    │   │   ├── urls.py
-    │   │   └── views.py
-    │   ├── customers/
-    │   │   ├── admin.py
-    │   │   ├── apps.py
-    │   │   ├── forms.py
-    │   │   ├── migrations/
-    │   │   │   └── 0001_initial.py
-    │   │   ├── models.py
-    │   │   ├── urls.py
-    │   │   └── views.py
-    │   ├── dashboard/
-    │   │   ├── admin.py
-    │   │   ├── apps.py
-    │   │   ├── management/
-    │   │   │   └── commands/
-    │   │   │       └── populate_sample_data.py
-    │   │   ├── urls.py
-    │   │   └── views.py
-    │   ├── inventory/
-    │   │   ├── admin.py
-    │   │   ├── apps.py
-    │   │   ├── forms.py
-    │   │   ├── migrations/
-    │   │   │   └── 0001_initial.py
-    │   │   ├── models.py
-    │   │   ├── urls.py
-    │   │   └── views.py
-    │   ├── invoices/
-    │   │   ├── admin.py
-    │   │   ├── apps.py
-    │   │   ├── forms.py
-    │   │   ├── migrations/
-    │   │   │   └── 0001_initial.py
-    │   │   ├── models.py
-    │   │   ├── urls.py
-    │   │   └── views.py
-    │   ├── orders/
-    │   │   ├── admin.py
-    │   │   ├── apps.py
-    │   │   ├── forms.py
-    │   │   ├── migrations/
-    │   │   │   └── 0001_initial.py
-    │   │   ├── models.py
-    │   │   ├── urls.py
-    │   │   └── views.py
-    │   └── suppliers/
-    │       ├── admin.py
-    │       ├── apps.py
-    │       ├── forms.py
-    │       ├── migrations/
-    │       │   └── 0001_initial.py
-    │       ├── models.py
-    │       ├── urls.py
-    │       └── views.py
-    ├── config/
-    │   ├── settings.py
-    │   ├── urls.py
-    │   └── wsgi.py
-    ├── db.sqlite3
-    ├── manage.py
-    ├── requirements.txt
-    ├── static/
-    │   ├── css/
-    │   └── js/
-    └── templates/
-        ├── authentication/
-        │   ├── create_user.html
-        │   └── login.html
-        ├── base.html
-        ├── company/
-        │   └── profile.html
-        ├── customers/
-        │   ├── delete.html
-        │   ├── detail.html
-        │   ├── form.html
-        │   └── list.html
-        ├── dashboard/
-        │   ├── home.html
-        │   └── reports.html
-        ├── inventory/
-        │   ├── delete.html
-        │   ├── detail.html
-        │   ├── form.html
-        │   ├── list.html
-        │   └── low_stock.html
-        ├── invoices/
-        │   ├── add_payment.html
-        │   ├── delete.html
-        │   ├── detail.html
-        │   ├── form.html
-        │   ├── list.html
-        │   └── print.html
-        ├── orders/
-        │   ├── delete.html
-        │   ├── detail.html
-        │   ├── form.html
-        │   └── list.html
-        └── suppliers/
-            ├── delete.html
-            ├── detail.html
-            ├── form.html
-            └── list.html
+├── project/
+│   ├── apps/
+│   │   ├── authentication/
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── forms.py
+│   │   │   ├── migrations/
+│   │   │   │   └── 0001_initial.py
+│   │   │   ├── models.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── company/
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── forms.py
+│   │   │   ├── migrations/
+│   │   │   │   └── 0001_initial.py
+│   │   │   ├── models.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── customers/
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── forms.py
+│   │   │   ├── migrations/
+│   │   │   │   └── 0001_initial.py
+│   │   │   ├── models.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── dashboard/
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── management/
+│   │   │   │   └── commands/
+│   │   │   │       └── populate_sample_data.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── inventory/
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── forms.py
+│   │   │   ├── migrations/
+│   │   │   │   └── 0001_initial.py
+│   │   │   ├── models.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── invoices/
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── forms.py
+│   │   │   ├── migrations/
+│   │   │   │   ├── 0001_initial.py
+│   │   │   │   └── 0002_initial.py
+│   │   │   ├── models.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   ├── orders/
+│   │   │   ├── admin.py
+│   │   │   ├── apps.py
+│   │   │   ├── forms.py
+│   │   │   ├── migrations/
+│   │   │   │   └── 0001_initial.py
+│   │   │   ├── models.py
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   └── suppliers/
+│   │       ├── admin.py
+│   │       ├── apps.py
+│   │       ├── forms.py
+│   │       ├── migrations/
+│   │       │   └── 0001_initial.py
+│   │       ├── models.py
+│   │       ├── urls.py
+│   │       └── views.py
+│   ├── config/
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   ├── db.sqlite3
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── static/
+│   │   ├── css/
+│   │   └── js/
+│   └── templates/
+│       ├── authentication/
+│       │   ├── create_user.html
+│       │   └── login.html
+│       ├── base.html
+│       ├── company/
+│       │   └── profile.html
+│       ├── customers/
+│       │   ├── delete.html
+│       │   ├── detail.html
+│       │   ├── form.html
+│       │   └── list.html
+│       ├── dashboard/
+│       │   ├── home.html
+│       │   └── reports.html
+│       ├── inventory/
+│       │   ├── delete.html
+│       │   ├── detail.html
+│       │   ├── form.html
+│       │   ├── list.html
+│       │   └── low_stock.html
+│       ├── invoices/
+│       │   ├── add_payment.html
+│       │   ├── delete.html
+│       │   ├── detail.html
+│       │   ├── form.html
+│       │   ├── list.html
+│       │   └── print.html
+│       ├── orders/
+│       │   ├── delete.html
+│       │   ├── detail.html
+│       │   ├── form.html
+│       │   └── list.html
+│       └── suppliers/
+│           ├── delete.html
+│           ├── detail.html
+│           ├── form.html
+│           └── list.html
+└── README.md
 
 ```
 
