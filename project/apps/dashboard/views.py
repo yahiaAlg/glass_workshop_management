@@ -479,6 +479,48 @@ def customer_reports(request):
     
     return render(request, 'dashboard/reports/customer_reports.html', context)
 
+import locale
+from datetime import datetime
+import re
+
+def parse_french_date(date_string):
+    """Parse French date string to date object"""
+    if not date_string:
+        return None
+    
+    # French month names mapping
+    french_months = {
+        'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04',
+        'mai': '05', 'juin': '06', 'juillet': '07', 'août': '08',
+        'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+    }
+    
+    # Try to parse different French date formats
+    try:
+        # Format: "1 juin 2025"
+        parts = date_string.strip().split()
+        if len(parts) == 3:
+            day, month_name, year = parts
+            month_name = month_name.lower()
+            if month_name in french_months:
+                month = french_months[month_name]
+                return datetime.strptime(f"{year}-{month}-{day.zfill(2)}", '%Y-%m-%d').date()
+        
+        # Format: "01/06/2025" or "1/6/2025"
+        if '/' in date_string:
+            return datetime.strptime(date_string, '%d/%m/%Y').date()
+        
+        # Format: "2025-06-01"
+        if '-' in date_string and len(date_string) == 10:
+            return datetime.strptime(date_string, '%Y-%m-%d').date()
+            
+    except (ValueError, IndexError):
+        pass
+    
+    # If all parsing attempts fail, return None
+    return None
+
+# Updated export_sales_excel function
 @login_required
 def export_sales_excel(request):
     """Export sales data to Excel"""
@@ -491,9 +533,17 @@ def export_sales_excel(request):
         start_date = today.replace(day=1)
         end_date = today
     else:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        # Use the new parsing function
+        start_date = parse_french_date(start_date)
+        end_date = parse_french_date(end_date)
+        
+        # If parsing fails, use defaults
+        if not start_date or not end_date:
+            today = timezone.now().date()
+            start_date = today.replace(day=1)
+            end_date = today
     
+    # Rest of the function remains the same...
     # Create Excel file in memory
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(output)
@@ -560,6 +610,109 @@ def export_sales_excel(request):
     
     return response
 
+
+# Updated export_financial_pdf function
+@login_required
+def export_financial_pdf(request):
+    """Export financial report to PDF"""
+    # Get date range
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    today = timezone.now().date()
+    if not start_date:
+        start_date = today.replace(day=1)
+    else:
+        start_date = parse_french_date(start_date)
+        if not start_date:
+            start_date = today.replace(day=1)
+    
+    if not end_date:
+        end_date = today
+    else:
+        end_date = parse_french_date(end_date)
+        if not end_date:
+            end_date = today
+    
+    # Rest of the function remains the same...
+    # Create PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    
+    # Get company info
+    company = Company.objects.first()
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=1  # Center
+    )
+    
+    # Content
+    story = []
+    
+    # Title
+    story.append(Paragraph("Rapport Financier", title_style))
+    if company:
+        story.append(Paragraph(f"<b>{company.name}</b>", styles['Normal']))
+    story.append(Paragraph(f"Période: {start_date.strftime('%d/%m/%Y')} au {end_date.strftime('%d/%m/%Y')}", styles['Normal']))
+    story.append(Spacer(1, 20))
+    
+    # Financial data
+    paid_invoices = Invoice.objects.filter(
+        status='paid',
+        invoice_date__gte=start_date,
+        invoice_date__lte=end_date
+    )
+    
+    outstanding_invoices = Invoice.objects.filter(
+        status__in=['sent', 'overdue'],
+        invoice_date__gte=start_date,
+        invoice_date__lte=end_date
+    )
+    
+    total_revenue = paid_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    outstanding_amount = outstanding_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    
+    # Summary table
+    summary_data = [
+        ['Indicateur', 'Valeur'],
+        ['Chiffre d\'affaires', f'{total_revenue:,.2f} DA'],
+        ['Créances en cours', f'{outstanding_amount:,.2f} DA'],
+        ['Factures payées', str(paid_invoices.count())],
+        ['Factures en attente', str(outstanding_invoices.count())],
+    ]
+    
+    summary_table = Table(summary_data)
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    story.append(summary_table)
+    
+    # Build PDF
+    doc.build(story)
+    
+    # Get PDF content
+    pdf_content = buffer.getvalue()
+    buffer.close()
+    
+    # Create response
+    response = HttpResponse(pdf_content, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename=rapport_financier_{start_date}_{end_date}.pdf'
+    
+    return response
 
 @login_required
 def export_inventory_excel(request):
@@ -657,102 +810,7 @@ def export_customers_csv(request):
     return response
 
 
-@login_required
-def export_financial_pdf(request):
-    """Export financial report to PDF"""
-    # Get date range
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    
-    today = timezone.now().date()
-    if not start_date:
-        start_date = today.replace(day=1)
-    else:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-    
-    if not end_date:
-        end_date = today
-    else:
-        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-    
-    # Create PDF
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-    
-    # Get company info
-    company = Company.objects.first()
-    
-    # Styles
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=18,
-        spaceAfter=30,
-        alignment=1  # Center
-    )
-    
-    # Content
-    story = []
-    
-    # Title
-    story.append(Paragraph("Rapport Financier", title_style))
-    if company:
-        story.append(Paragraph(f"<b>{company.name}</b>", styles['Normal']))
-    story.append(Paragraph(f"Période: {start_date.strftime('%d/%m/%Y')} au {end_date.strftime('%d/%m/%Y')}", styles['Normal']))
-    story.append(Spacer(1, 20))
-    
-    # Financial data
-    paid_invoices = Invoice.objects.filter(
-        status='paid',
-        invoice_date__gte=start_date,
-        invoice_date__lte=end_date
-    )
-    
-    outstanding_invoices = Invoice.objects.filter(
-        status__in=['sent', 'overdue'],
-        invoice_date__gte=start_date,
-        invoice_date__lte=end_date
-    )
-    
-    total_revenue = paid_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-    outstanding_amount = outstanding_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-    
-    # Summary table
-    summary_data = [
-        ['Indicateur', 'Valeur'],
-        ['Chiffre d\'affaires', f'{total_revenue:,.2f} DA'],
-        ['Créances en cours', f'{outstanding_amount:,.2f} DA'],
-        ['Factures payées', str(paid_invoices.count())],
-        ['Factures en attente', str(outstanding_invoices.count())],
-    ]
-    
-    summary_table = Table(summary_data)
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    story.append(summary_table)
-    
-    # Build PDF
-    doc.build(story)
-    
-    # Get PDF content
-    pdf_content = buffer.getvalue()
-    buffer.close()
-    
-    # Create response
-    response = HttpResponse(pdf_content, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename=rapport_financier_{start_date}_{end_date}.pdf'
-    
-    return response
+
 
 
 @login_required
