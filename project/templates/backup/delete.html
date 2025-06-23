@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer Tâche #{{ job.id }} - Gestion Verrerie{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-trash-alt me-2 text-danger"></i>
+        Supprimer la Tâche #{{ job.id }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'backup:detail' pk=job.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour aux détails
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmation de Suppression
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Attention!</strong> Cette action est irréversible.
+                </div>
+                
+                <p class="mb-4">
+                    Êtes-vous sûr de vouloir supprimer cette tâche de sauvegarde ? 
+                    Cette action supprimera définitivement :
+                </p>
+                
+                <ul class="mb-4">
+                    <li>Les informations de la tâche</li>
+                    <li>Les logs et messages associés</li>
+                    {% if job.export_file %}
+                    <li><strong>Le fichier d'export généré</strong></li>
+                    {% endif %}
+                    {% if job.import_file %}
+                    <li><strong>Le fichier d'import téléchargé</strong></li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Job Summary -->
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h6 class="card-title">Résumé de la tâche à supprimer :</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>ID :</strong> #{{ job.id }}</li>
+                                    <li><strong>Type :</strong> {{ job.get_job_type_display }}</li>
+                                    <li><strong>Format :</strong> {{ job.get_format_display }}</li>
+                                    <li><strong>Statut :</strong> 
+                                        <span class="badge badge-{% if job.status == 'completed' %}success{% elif job.status == 'failed' %}danger{% elif job.status == 'processing' %}warning{% else %}secondary{% endif %}">
+                                            {{ job.get_status_display }}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>Créé le :</strong> {{ job.created_at|date:"d/m/Y H:i" }}</li>
+                                    <li><strong>Créé par :</strong> {{ job.created_by.get_full_name|default:job.created_by.username }}</li>
+                                    {% if job.completed_at %}
+                                    <li><strong>Terminé le :</strong> {{ job.completed_at|date:"d/m/Y H:i" }}</li>
+                                    {% endif %}
+                                    {% if job.processed_records and job.total_records %}
+                                    <li><strong>Enregistrements :</strong> {{ job.processed_records }}/{{ job.total_records }}</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warning for completed export jobs -->
+                {% if job.job_type == 'export' and job.status == 'completed' and job.export_file %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-file-download me-2"></i>
+                    <strong>Fichier d'export disponible :</strong> 
+                    Assurez-vous d'avoir téléchargé le fichier d'export si vous en avez besoin, 
+                    car il sera définitivement supprimé.
+                    <div class="mt-2">
+                        <a href="{% url 'backup:download' pk=job.id %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-download me-1"></i>
+                            Télécharger maintenant
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Confirmation Form -->
+                <form method="POST" class="mt-4">
+                    {% csrf_token %}
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label fw-bold" for="confirmDelete">
+                            Je comprends que cette action est irréversible et je souhaite supprimer cette tâche.
+                        </label>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'backup:detail' pk=job.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                            <i class="fas fa-trash me-1"></i>
+                            Supprimer Définitivement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Help Card -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Alternatives
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Si vous ne souhaitez pas supprimer complètement cette tâche, voici quelques alternatives :
+                </p>
+                <ul class="mb-0">
+                    <li>Conserver la tâche pour l'historique et supprimer seulement les fichiers</li>
+                    <li>Archiver la tâche au lieu de la supprimer</li>
+                    <li>Créer une nouvelle tâche similaire avant de supprimer celle-ci</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const deleteButton = document.getElementById('deleteButton');
+    
+    confirmCheckbox.addEventListener('change', function() {
+        deleteButton.disabled = !this.checked;
+    });
+    
+    // Add confirmation on form submit
+    deleteButton.closest('form').addEventListener('submit', function(e) {
+        if (!confirm('Êtes-vous absolument certain de vouloir supprimer cette tâche ? Cette action ne peut pas être annulée.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

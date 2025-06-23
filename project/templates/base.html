@@ -230,6 +230,12 @@
                                 Rapports
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.namespace == 'backup' %}active{% endif %}" href="{% url 'backup:dashboard' %}">
+                                <i class="fas fa-database me-2"></i>
+                                Sauvegarde
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

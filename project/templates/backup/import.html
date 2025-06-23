@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Importer des Données - Gestion Verrerie{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-upload me-2 text-primary"></i>
+        Importer des Données
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'backup:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-import me-2"></i>
+                    Formulaire d'Import
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.format.id_for_label }}" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>
+                                {{ form.format.label }}
+                            </label>
+                            {{ form.format }}
+                            {% if form.format.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.format.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.import_file.id_for_label }}" class="form-label">
+                                <i class="fas fa-upload me-1"></i>
+                                {{ form.import_file.label }}
+                            </label>
+                            {{ form.import_file }}
+                            {% if form.import_file.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.import_file.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Taille maximale: 50MB. Formats acceptés: JSON, Excel, CSV, ZIP
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'backup:list' %}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>
+                            Démarrer l'Import
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informations Important
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Attention:</strong> L'import peut écraser des données existantes.
+                </div>
+                
+                <h6 class="fw-bold">Formats supportés:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-file-code text-primary me-2"></i>JSON (.json)</li>
+                    <li><i class="fas fa-file-excel text-success me-2"></i>Excel (.xlsx, .xls)</li>
+                    <li><i class="fas fa-file-csv text-info me-2"></i>CSV (.csv)</li>
+                    <li><i class="fas fa-file-archive text-warning me-2"></i>ZIP (.zip)</li>
+                </ul>
+                
+                <h6 class="fw-bold mt-3">Données importables:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-users text-primary me-2"></i>Clients</li>
+                    <li><i class="fas fa-boxes text-success me-2"></i>Produits</li>
+                    <li><i class="fas fa-clipboard-list text-info me-2"></i>Commandes</li>
+                    <li><i class="fas fa-file-invoice text-warning me-2"></i>Factures</li>
+                    <li><i class="fas fa-truck text-danger me-2"></i>Fournisseurs</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Conseils
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Vérifiez le format de votre fichier
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Faites une sauvegarde avant l'import
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Testez avec un petit échantillon d'abord
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success me-2"></i>
+                        Surveillez le statut de l'import
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
