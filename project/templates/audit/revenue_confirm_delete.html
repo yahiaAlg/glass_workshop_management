@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmer la suppression - {{ revenue.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Confirmer la suppression</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'audit:dashboard' %}">Audit</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'audit:revenue_list' %}">Revenus</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'audit:revenue_detail' revenue.pk %}">{{ revenue.title }}</a></li>
+                        <li class="breadcrumb-item active">Supprimer</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmation de suppression
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-warning me-2"></i>
+                        <strong>Attention !</strong> Cette action est irréversible.
+                    </div>
+
+                    <p class="mb-3">Êtes-vous sûr de vouloir supprimer ce revenu ?</p>
+                    
+                    <div class="bg-light p-3 rounded mb-4">
+                        <h6 class="fw-bold text-primary">{{ revenue.title }}</h6>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <small class="text-muted">Montant:</small><br>
+                                <span class="fw-bold text-success">{{ revenue.amount }}€</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">Date:</small><br>
+                                <span>{{ revenue.date|date:"d/m/Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-6">
+                                <small class="text-muted">Catégorie:</small><br>
+                                <span>{{ revenue.category }}</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">Statut:</small><br>
+                                {% if revenue.status == 'PENDING' %}
+                                    <span class="badge bg-warning">{{ revenue.get_status_display }}</span>
+                                {% elif revenue.status == 'CONFIRMED' %}
+                                    <span class="badge bg-info">{{ revenue.get_status_display }}</span>
+                                {% elif revenue.status == 'RECEIVED' %}
+                                    <span class="badge bg-success">{{ revenue.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ revenue.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if revenue.client %}
+                        <div class="mt-2">
+                            <small class="text-muted">Client/Source:</small><br>
+                            <span>{{ revenue.client }}</span>
+                        </div>
+                        {% endif %}
+                        {% if revenue.description %}
+                        <div class="mt-2">
+                            <small class="text-muted">Description:</small><br>
+                            <span>{{ revenue.description|truncatewords:20 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if revenue.documents.exists %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Ce revenu contient <strong>{{ revenue.documents.count }}</strong> document(s) qui seront également supprimé(s).
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger me-2">
+                            <i class="fas fa-trash-alt me-1"></i>
+                            Oui, supprimer définitivement
+                        </button>
+                    </form>
+                    
+                    <a href="{% url 'audit:revenue_detail' revenue.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Annuler
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-focus sur le bouton d'annulation pour éviter les suppressions accidentelles
+    document.addEventListener('DOMContentLoaded', function() {
+        const cancelBtn = document.querySelector('a[href*="revenue_detail"]');
+        if (cancelBtn) {
+            cancelBtn.focus();
+        }
+    });
+</script>
+{% endblock %}

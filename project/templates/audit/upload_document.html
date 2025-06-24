@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Document - {{ object.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Upload de document</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'audit:dashboard' %}">Audit</a></li>
+                        <li class="breadcrumb-item">
+                            {% if type == 'expense' %}
+                                <a href="{% url 'audit:expense_list' %}">Dépenses</a>
+                            {% else %}
+                                <a href="{% url 'audit:revenue_list' %}">Revenus</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item">
+                            {% if type == 'expense' %}
+                                <a href="{% url 'audit:expense_detail' object.pk %}">{{ object.title }}</a>
+                            {% else %}
+                                <a href="{% url 'audit:revenue_detail' object.pk %}">{{ object.title }}</a>
+                            {% endif %}
+                        </li>
+                        <li class="breadcrumb-item active">Upload document</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-upload me-2"></i>
+                        Ajouter un document
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Information sur l'objet parent -->
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>
+                            {% if type == 'expense' %}
+                                Dépense:
+                            {% else %}
+                                Revenu:
+                            {% endif %}
+                        </strong> {{ object.title }} ({{ object.amount }}€)
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.file.id_for_label }}" class="form-label">
+                                Fichier <span class="text-danger">*</span>
+                            </label>
+                            {{ form.file }}
+                            {% if form.file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.file.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Formats acceptés: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF (Max: 10MB)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                Nom du document <span class="text-danger">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.name.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Donnez un nom descriptif à votre document
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Description optionnelle du contenu du document
+                            </div>
+                        </div>
+
+                        <!-- Preview de fichier -->
+                        <div id="filePreview" class="mb-3" style="display: none;">
+                            <div class="card border-light">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">Aperçu du fichier:</h6>
+                                    <div id="previewContent"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-upload me-1"></i>
+                                    Upload document
+                                </button>
+                                <button type="button" class="btn btn-secondary ms-2" id="resetBtn">
+                                    <i class="fas fa-redo me-1"></i>
+                                    Réinitialiser
+                                </button>
+                            </div>
+                            <a href="{% if type == 'expense' %}{% url 'audit:expense_detail' object.pk %}{% else %}{% url 'audit:revenue_detail' object.pk %}{% endif %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Retour
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info me-2"></i>
+                        Informations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Conseils pour l'upload:</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Utilisez des noms de fichiers descriptifs
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Assurez-vous que le document est lisible
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Évitez les fichiers trop volumineux
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Vérifiez que les informations sont complètes
+                        </li>
+                    </ul>
+
+                    <hr>
+
+                    <h6 class="text-primary">Formats supportés:</h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-light text-dark">PDF</span>
+                        <span class="badge bg-light text-dark">DOC</span>
+                        <span class="badge bg-light text-dark">DOCX</span>
+                        <span class="badge bg-light text-dark">XLS</span>
+                        <span class="badge bg-light text-dark">XLSX</span>
+                        <span class="badge bg-light text-dark">JPG</span>
+                        <span class="badge bg-light text-dark">PNG</span>
+                        <span class="badge bg-light text-dark">GIF</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents existants -->
+            {% if object.documents.exists %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-paperclip me-2"></i>
+                        Documents existants ({{ object.documents.count }})
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for doc in object.documents.all %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold small">{{ doc.name }}</div>
+                                    {% if doc.description %}
+                                        <small class="text-muted">{{ doc.description|truncatewords:10 }}</small>
+                                    {% endif %}
+                                    <div class="small text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ doc.uploaded_at|date:"d/m/Y H:i" }}
+                                    </div>
+                                </div>
+                                <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('id_file');
+    const nameInput = document.getElementById('id_name');
+    const previewDiv = document.getElementById('filePreview');
+    const previewContent = document.getElementById('previewContent');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const form = document.getElementById('uploadForm');
+
+    // Auto-remplissage du nom basé sur le fichier
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            // Si le nom est vide, proposer le nom du fichier
+            if (!nameInput.value.trim()) {
+                const fileName = file.name.replace(/\.[^/.]+$/, ""); // Retire l'extension
+                nameInput.value = fileName;
+            }
+
+            // Afficher la preview
+            showFilePreview(file);
+        } else {
+            hideFilePreview();
+        }
+    });
+
+    function showFilePreview(file) {
+        const fileSize = (file.size / 1024 / 1024).toFixed(2); // MB
+        const fileType = file.type || 'Type inconnu';
+        
+        previewContent.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-file fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <div class="fw-bold">${file.name}</div>
+                    <small class="text-muted">
+                        Taille: ${fileSize} MB | Type: ${fileType}
+                    </small>
+                </div>
+            </div>
+        `;
+        
+        previewDiv.style.display = 'block';
+        
+        // Validation de la taille
+        if (file.size > 10 * 1024 * 1024) { // 10MB
+            previewContent.innerHTML += `
+                <div class="alert alert-warning mt-2 mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Attention: Le fichier est volumineux (${fileSize} MB). 
+                    La limite recommandée est de 10 MB.
+                </div>
+            `;
+        }
+    }
+
+    function hideFilePreview() {
+        previewDiv.style.display = 'none';
+    }
+
+    // Reset du formulaire
+    resetBtn.addEventListener('click', function() {
+        form.reset();
+        hideFilePreview();
+        nameInput.focus();
+    });
+
+    // Validation avant soumission
+    form.addEventListener('submit', function(e) {
+        const file = fileInput.files[0];
+        const name = nameInput.value.trim();
+
+        if (!file) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un fichier.');
+            fileInput.focus();
+            return;
+        }
+
+        if (!name) {
+            e.preventDefault();
+            alert('Veuillez saisir un nom pour le document.');
+            nameInput.focus();
+            return;
+        }
+
+        // Désactiver le bouton pour éviter les doubles soumissions
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Upload en cours...';
+    });
+
+    // Focus initial
+    nameInput.focus();
+});
+</script>
+{% endblock %}

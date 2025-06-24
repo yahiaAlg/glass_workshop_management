@@ -236,6 +236,13 @@
                                 Sauvegarde
                             </a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.namespace == 'audit' %}active{% endif %}" href="{% url 'audit:dashboard' %}">
+                                <i class="fas fa-calculator me-2"></i>
+                                Audit Financier
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

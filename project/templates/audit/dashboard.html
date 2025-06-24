@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de Bord Audit - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-chart-line me-2"></i>
+        Tableau de Bord Audit
+    </h1>
+</div>
+
+<!-- Métriques principales -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card metric-card">
+            <div class="card-body glass-pattern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-white-50 mb-0">Total Dépenses</h6>
+                        <h3 class="mb-0">{{ total_expenses|floatformat:2 }} DA</h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-arrow-down fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card metric-card success">
+            <div class="card-body glass-pattern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-white-50 mb-0">Total Revenus</h6>
+                        <h3 class="mb-0">{{ total_revenues|floatformat:2 }} DA</h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-arrow-up fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card metric-card {% if net_profit >= 0 %}success{% else %}danger{% endif %}">
+            <div class="card-body glass-pattern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-white-50 mb-0">Bénéfice Net</h6>
+                        <h3 class="mb-0">{{ net_profit|floatformat:2 }} DA</h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-{% if net_profit >= 0 %}trophy{% else %}exclamation-triangle{% endif %} fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card metric-card warning">
+            <div class="card-body glass-pattern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title text-white-50 mb-0">Bénéfice 30j</h6>
+                        <h3 class="mb-0">{{ monthly_net_profit|floatformat:2 }} DA</h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Dépenses par Catégorie
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="expensePieChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Revenus par Catégorie
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenuePieChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activités récentes -->
+<div class="row">
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Dépenses Récentes
+                </h5>
+                <a href="{% url 'audit:expense_list' %}" class="btn btn-sm btn-outline-primary">
+                    Voir tout
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_expenses %}
+                    {% for expense in recent_expenses %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div>
+                                <strong>{{ expense.title }}</strong>
+                                <br>
+                                <small class="text-muted">{{ expense.category.name }} - {{ expense.date }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="text-danger fw-bold">-{{ expense.amount|floatformat:2 }} DA</span>
+                                <br>
+                                <span class="badge bg-{% if expense.status == 'paid' %}success{% elif expense.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                    {{ expense.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">Aucune dépense récente</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Revenus Récents
+                </h5>
+                <a href="{% url 'audit:revenue_list' %}" class="btn btn-sm btn-outline-primary">
+                    Voir tout
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_revenues %}
+                    {% for revenue in recent_revenues %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div>
+                                <strong>{{ revenue.title }}</strong>
+                                <br>
+                                <small class="text-muted">{{ revenue.category.name }} - {{ revenue.date }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="text-success fw-bold">+{{ revenue.amount|floatformat:2 }} DA</span>
+                                <br>
+                                <span class="badge bg-{% if revenue.status == 'received' %}success{% elif revenue.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                    {{ revenue.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">Aucun revenu récent</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique des dépenses par catégorie
+const expenseCtx = document.getElementById('expensePieChart').getContext('2d');
+const expenseChart = new Chart(expenseCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for item in expense_by_category %}'{{ item.category__name }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for item in expense_by_category %}{{ item.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                '#dc2626', '#ea580c', '#d97706', '#ca8a04', '#65a30d',
+                '#059669', '#0891b2', '#0284c7', '#2563eb', '#4f46e5'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Graphique des revenus par catégorie
+const revenueCtx = document.getElementById('revenuePieChart').getContext('2d');
+const revenueChart = new Chart(revenueCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for item in revenue_by_category %}'{{ item.category__name }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for item in revenue_by_category %}{{ item.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                '#059669', '#0891b2', '#0284c7', '#2563eb', '#4f46e5',
+                '#7c3aed', '#a855f7', '#c026d3', '#db2777', '#e11d48'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Liste des Revenus{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Revenus Additionnels</h2>
+                <a href="{% url 'audit:revenue_create' %}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Nouveau Revenu
+                </a>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">Catégorie</label>
+                            <select name="category" id="category" class="form-select">
+                                <option value="">Toutes les catégories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.name }}" {% if filters.category == category.name %}selected{% endif %}>
+                                        {{ category }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Statut</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">Tous les statuts</option>
+                                <option value="PENDING" {% if filters.status == 'PENDING' %}selected{% endif %}>En attente</option>
+                                <option value="CONFIRMED" {% if filters.status == 'CONFIRMED' %}selected{% endif %}>Confirmé</option>
+                                <option value="RECEIVED" {% if filters.status == 'RECEIVED' %}selected{% endif %}>Reçu</option>
+                                <option value="CANCELLED" {% if filters.status == 'CANCELLED' %}selected{% endif %}>Annulé</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_from" class="form-label">Date début</label>
+                            <input type="date" name="date_from" id="date_from" class="form-control" value="{{ filters.date_from }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_to" class="form-label">Date fin</label>
+                            <input type="date" name="date_to" id="date_to" class="form-control" value="{{ filters.date_to }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="search" class="form-label">Recherche</label>
+                            <input type="text" name="search" id="search" class="form-control" 
+                                   placeholder="Titre, client..." value="{% if filters.search %}{{ filters.search }}{% endif %}">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5>Total des Revenus Filtrés</h5>
+                            <h3>{{ total_amount }}€</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des revenus -->
+            <div class="card">
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Titre</th>
+                                        <th>Catégorie</th>
+                                        <th>Montant</th>
+                                        <th>Date</th>
+                                        <th>Client</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for revenue in page_obj %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'audit:revenue_detail' revenue.pk %}" class="text-decoration-none">
+                                                {{ revenue.title }}
+                                            </a>
+                                        </td>
+                                        <td>{{ revenue.category }}</td>
+                                        <td class="text-success fw-bold">{{ revenue.amount }}€</td>
+                                        <td>{{ revenue.date|date:"d/m/Y" }}</td>
+                                        <td>{{ revenue.client|default:"-" }}</td>
+                                        <td>
+                                            {% if revenue.status == 'PENDING' %}
+                                                <span class="badge bg-warning">{{ revenue.get_status_display }}</span>
+                                            {% elif revenue.status == 'CONFIRMED' %}
+                                                <span class="badge bg-info">{{ revenue.get_status_display }}</span>
+                                            {% elif revenue.status == 'RECEIVED' %}
+                                                <span class="badge bg-success">{{ revenue.get_status_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">{{ revenue.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'audit:revenue_detail' revenue.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'audit:revenue_update' revenue.pk %}" 
+                                                   class="btn btn-sm btn-outline-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'audit:revenue_delete' revenue.pk %}" 
+                                                   class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Navigation des pages">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">&laquo; Première</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Précédente</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Suivante</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Dernière &raquo;</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5>Aucun revenu trouvé</h5>
+                            <p class="text-muted">Créez votre premier revenu ou modifiez vos filtres de recherche.</p>
+                            <a href="{% url 'audit:revenue_create' %}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Nouveau Revenu
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

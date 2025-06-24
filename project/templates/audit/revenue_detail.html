@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détail Revenu - {{ revenue.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ revenue.title }}</h2>
+                <div>
+                    <a href="{% url 'audit:revenue_update' revenue.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    <a href="{% url 'audit:revenue_delete' revenue.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </a>
+                    <a href="{% url 'audit:revenue_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Informations du revenu</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Montant:</strong> <span class="text-success">{{ revenue.amount }}€</span></p>
+                                    <p><strong>Date:</strong> {{ revenue.date|date:"d/m/Y" }}</p>
+                                    <p><strong>Catégorie:</strong> {{ revenue.category }}</p>
+                                    <p><strong>Statut:</strong> 
+                                        {% if revenue.status == 'PENDING' %}
+                                            <span class="badge bg-warning">{{ revenue.get_status_display }}</span>
+                                        {% elif revenue.status == 'CONFIRMED' %}
+                                            <span class="badge bg-info">{{ revenue.get_status_display }}</span>
+                                        {% elif revenue.status == 'RECEIVED' %}
+                                            <span class="badge bg-success">{{ revenue.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ revenue.get_status_display }}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Client:</strong> {{ revenue.client|default:"-" }}</p>
+                                    <p><strong>Numéro de référence:</strong> {{ revenue.reference_number|default:"-" }}</p>
+                                    <p><strong>Créé par:</strong> {{ revenue.created_by.get_full_name|default:revenue.created_by.username }}</p>
+                                    <p><strong>Créé le:</strong> {{ revenue.created_at|date:"d/m/Y H:i" }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if revenue.description %}
+                            <div class="mt-3">
+                                <strong>Description:</strong>
+                                <p class="mt-2">{{ revenue.description|linebreaks }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if revenue.notes %}
+                            <div class="mt-3">
+                                <strong>Notes:</strong>
+                                <p class="mt-2">{{ revenue.notes|linebreaks }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Documents</h5>
+                            <a href="{% url 'audit:upload_document' 'revenue' revenue.pk %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-upload"></i> Ajouter
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if documents %}
+                                {% for document in documents %}
+                                <div class="mb-3 p-2 border rounded">
+                                    <h6>{{ document.name }}</h6>
+                                    {% if document.description %}
+                                        <p class="small text-muted">{{ document.description }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        Uploadé le {{ document.uploaded_at|date:"d/m/Y H:i" }}
+                                        par {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}
+                                    </small>
+                                    <div class="mt-2">
+                                        <a href="{{ document.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-download"></i> Télécharger
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">Aucun document attaché.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
