@@ -21,11 +21,24 @@ class BackupJob(models.Model):
         ('json', 'JSON'),
         ('excel', 'Excel'),
         ('csv', 'CSV'),
+        ('xml', 'XML'),
+        ('sql', 'SQL'),
+    ]
+    
+    COMPRESSION_CHOICES = [
+        ('none', 'Aucune'),
+        ('zip', 'ZIP'),
+        ('gzip', 'GZIP'),
     ]
     
     job_type = models.CharField(max_length=10, choices=JOB_TYPES, verbose_name="Type d'opération")
     format = models.CharField(max_length=10, choices=FORMAT_CHOICES, verbose_name="Format")
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending', verbose_name="Statut")
+    
+    # Export options
+    compression = models.CharField(max_length=10, choices=COMPRESSION_CHOICES, default='zip', verbose_name="Compression")
+    include_media = models.BooleanField(default=False, verbose_name="Inclure les fichiers média")
+    description = models.TextField(blank=True, verbose_name="Description")
     
     # Data selection
     include_customers = models.BooleanField(default=True, verbose_name="Inclure les clients")
@@ -34,6 +47,7 @@ class BackupJob(models.Model):
     include_invoices = models.BooleanField(default=True, verbose_name="Inclure les factures")
     include_suppliers = models.BooleanField(default=True, verbose_name="Inclure les fournisseurs")
     include_company = models.BooleanField(default=True, verbose_name="Inclure les infos entreprise")
+    include_audit = models.BooleanField(default=True, verbose_name="Inclure les données d'audit")
     
     # Date filters
     date_from = models.DateField(null=True, blank=True, verbose_name="Date de début")

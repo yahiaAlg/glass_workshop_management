@@ -2,107 +2,143 @@
 from django import forms
 from .models import BackupJob
 
-class ExportForm(forms.Form):
-    format = forms.ChoiceField(
-        choices=BackupJob.FORMAT_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label="Format d'export"
+class ExportForm(forms.ModelForm):
+    # Add missing fields that the template expects
+    COMPRESSION_CHOICES = [
+        ('none', 'Aucune'),
+        ('zip', 'ZIP'),
+        ('gzip', 'GZIP'),
+    ]
+    
+    compression = forms.ChoiceField(
+        choices=COMPRESSION_CHOICES,
+        initial='zip',
+        label="Compression",
+        help_text="Type de compression pour le fichier d'export",
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
     
-    # Data selection
-    include_customers = forms.BooleanField(
-        required=False, 
-        initial=True,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label="Clients"
+    # Tables selection as individual checkboxes
+    tables = forms.MultipleChoiceField(
+        choices=[
+            ('customers', 'Clients'),
+            ('products', 'Produits'),
+            ('orders', 'Commandes'),
+            ('invoices', 'Factures'),
+            ('suppliers', 'Fournisseurs'),
+            ('company', 'Informations entreprise'),
+            ('audit', 'Données d\'audit'),
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        label="Tables à exporter",
+        help_text="Sélectionnez les données à inclure dans l'export",
+        required=False
     )
     
-    include_products = forms.BooleanField(
-        required=False, 
-        initial=True,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label="Produits"
-    )
-    
-    include_orders = forms.BooleanField(
-        required=False, 
-        initial=True,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label="Commandes"
-    )
-    
-    include_invoices = forms.BooleanField(
-        required=False, 
-        initial=True,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label="Factures"
-    )
-    
-    include_suppliers = forms.BooleanField(
-        required=False, 
-        initial=True,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label="Fournisseurs"
-    )
-    
-    include_company = forms.BooleanField(
-        required=False, 
-        initial=True,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label="Informations entreprise"
-    )
-    
-    # Date filters
-    date_from = forms.DateField(
+    include_media = forms.BooleanField(
         required=False,
-        widget=forms.DateInput(attrs={
-            'class': 'form-control',
-            'type': 'date'
-        }),
-        label="Date de début"
+        initial=False,
+        label="Inclure les fichiers média",
+        help_text="Inclure les images et documents (augmente la taille du fichier)",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
     
-    date_to = forms.DateField(
+    description = forms.CharField(
         required=False,
-        widget=forms.DateInput(attrs={
+        max_length=500,
+        label="Description",
+        help_text="Description optionnelle de cet export",
+        widget=forms.Textarea(attrs={
             'class': 'form-control',
-            'type': 'date'
-        }),
-        label="Date de fin"
+            'rows': 3,
+            'placeholder': 'Description de cet export...'
+        })
     )
 
-class ImportForm(forms.Form):
-    format = forms.ChoiceField(
-        choices=BackupJob.FORMAT_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label="Format du fichier"
-    )
-    
-    import_file = forms.FileField(
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': '.json,.xlsx,.csv,.zip'
-        }),
-        label="Fichier à importer"
-    )
-    
-    def clean_import_file(self):
-        file = self.cleaned_data.get('import_file')
-        format_type = self.cleaned_data.get('format')
+    class Meta:
+        model = BackupJob
+        fields = [
+            'format',
+            'date_from',
+            'date_to'
+        ]
+        widgets = {
+            'format': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_format'
+            }),
+            'date_from': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'id': 'id_date_from'
+            }),
+            'date_to': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'id': 'id_date_to'
+            }),
+        }
         
-        if file:
-            # Check file extension based on format
-            filename = file.name.lower()
-            
-            if format_type == 'json' and not filename.endswith('.json'):
-                raise forms.ValidationError("Le fichier doit être au format JSON (.json)")
-            elif format_type == 'excel' and not filename.endswith(('.xlsx', '.xls')):
-                raise forms.ValidationError("Le fichier doit être au format Excel (.xlsx, .xls)")
-            elif format_type == 'csv' and not filename.endswith(('.csv', '.zip')):
-                raise forms.ValidationError("Le fichier doit être au format CSV (.csv) ou ZIP (.zip)")
-            
-            # Check file size (max 50MB)
-            if file.size > 50 * 1024 * 1024:
-                raise forms.ValidationError("Le fichier ne peut pas dépasser 50MB")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         
-        return file
+        # Set initial values for tables based on model boolean fields
+        initial_tables = []
+        if self.instance and self.instance.pk:
+            if self.instance.include_customers:
+                initial_tables.append('customers')
+            if self.instance.include_products:
+                initial_tables.append('products')
+            if self.instance.include_orders:
+                initial_tables.append('orders')
+            if self.instance.include_invoices:
+                initial_tables.append('invoices')
+            if self.instance.include_suppliers:
+                initial_tables.append('suppliers')
+            if self.instance.include_company:
+                initial_tables.append('company')
+            if hasattr(self.instance, 'include_audit') and self.instance.include_audit:
+                initial_tables.append('audit')
+        else:
+            # Default to all tables selected
+            initial_tables = ['customers', 'products', 'orders', 'invoices', 'suppliers', 'company', 'audit']
+            
+        self.fields['tables'].initial = initial_tables
+        
+        # Add labels
+        self.fields['format'].label = "Format d'export"
+        self.fields['date_from'].label = "Date de début"
+        self.fields['date_to'].label = "Date de fin"
+        
+        # Add help text
+        self.fields['format'].help_text = "Format du fichier d'export"
+        self.fields['date_from'].help_text = "Exporter les données à partir de cette date"
+        self.fields['date_to'].help_text = "Exporter les données jusqu'à cette date"
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Convert tables selection to individual boolean fields
+        selected_tables = self.cleaned_data.get('tables', [])
+        instance.include_customers = 'customers' in selected_tables
+        instance.include_products = 'products' in selected_tables
+        instance.include_orders = 'orders' in selected_tables
+        instance.include_invoices = 'invoices' in selected_tables
+        instance.include_suppliers = 'suppliers' in selected_tables
+        instance.include_company = 'company' in selected_tables
+        
+        if hasattr(instance, 'include_audit'):
+            instance.include_audit = 'audit' in selected_tables
+        
+        if commit:
+            instance.save()
+        return instance
+
+class ImportForm(forms.ModelForm):
+    class Meta:
+        model = BackupJob
+        fields = ['format', 'import_file']
+        widgets = {
+            'format': forms.Select(attrs={'class': 'form-select'}),
+            'import_file': forms.FileInput(attrs={'class': 'form-control'}),
+        }

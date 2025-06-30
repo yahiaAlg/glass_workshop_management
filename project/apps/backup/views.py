@@ -52,23 +52,43 @@ def backup_list(request):
     
     return render(request, 'backup/list.html', context)
 
+# Replace the export_data view in views.py with this fixed version
+
 @login_required
 def export_data(request):
     """Export data form and processing"""
     if request.method == 'POST':
         form = ExportForm(request.POST)
         if form.is_valid():
-            # Create backup job
-            job = BackupJob.objects.create(
-                job_type='export',
-                created_by=request.user,
-                **form.cleaned_data
-            )
+            # Debug: Print form data
+            print("Form cleaned_data:", form.cleaned_data)
+            
+            # Create backup job using form.save() to handle field conversion
+            job = form.save(commit=False)
+            job.job_type = 'export'
+            job.created_by = request.user
+            job.save()
+            
+            # Debug: Print job fields after creation
+            job.add_log(f"Job created with options:")
+            job.add_log(f"- Customers: {job.include_customers}")
+            job.add_log(f"- Products: {job.include_products}")
+            job.add_log(f"- Orders: {job.include_orders}")
+            job.add_log(f"- Invoices: {job.include_invoices}")
+            job.add_log(f"- Suppliers: {job.include_suppliers}")
+            job.add_log(f"- Company: {job.include_company}")
+            if hasattr(job, 'include_audit'):
+                job.add_log(f"- Audit: {job.include_audit}")
             
             # Start export in background
             def run_export():
-                service = BackupService(job)
-                service.export_data()
+                try:
+                    service = BackupService(job)
+                    service.export_data()
+                except Exception as e:
+                    job.add_log(f"Export thread error: {str(e)}")
+                    job.status = 'failed'
+                    job.save()
             
             thread = threading.Thread(target=run_export)
             thread.daemon = True
@@ -76,6 +96,9 @@ def export_data(request):
             
             messages.success(request, f'Export lancé avec succès. Tâche #{job.id}')
             return redirect('backup:detail', pk=job.id)
+        else:
+            # Debug: Print form errors
+            print("Form errors:", form.errors)
     else:
         form = ExportForm()
     
