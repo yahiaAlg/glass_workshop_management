@@ -299,8 +299,8 @@
                         <span class="product-code">{{ item.product.code }}</span>
                     </td>
                     <td class="text-left">{{ item.description }}</td>
-                    <td>{% if item.width %}{{ item.width|floatformat:1 }}{% else %}-{% endif %}</td>
-                    <td>{% if item.height %}{{ item.height|floatformat:1 }}{% else %}-{% endif %}</td>
+                    <td>{% if item.width %}{{ item.width|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td>{% if item.height %}{{ item.height|floatformat:2 }}{% else %}-{% endif %}</td>
                     <td>{% if item.thickness %}{{ item.thickness }}{% else %}-{% endif %}</td>
                     <td>
                         {% if item.width and item.height %}
@@ -309,7 +309,7 @@
                             -
                         {% endif %}
                     </td>
-                    <td>{{ item.quantity|floatformat:1 }}</td>
+                    <td>{{ item.quantity|floatformat:2 }}</td>
                     <td class="text-right">{{ item.unit_price|floatformat:2 }}DA</td>
                     <td class="text-right"><strong>{{ item.subtotal|floatformat:2 }}DA</strong></td>
                 </tr>

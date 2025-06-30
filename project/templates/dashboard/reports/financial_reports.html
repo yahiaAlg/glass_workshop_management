@@ -102,7 +102,7 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between">
                         <span>Taux de recouvrement</span>
-                        <strong class="text-success">{{ collection_rate|floatformat:1 }}%</strong>
+                        <strong class="text-success">{{ collection_rate|floatformat:2 }}%</strong>
                     </div>
                     <div class="progress mt-1">
                         <div class="progress-bar bg-success" style="width: {{ collection_rate|floatformat:0|add:0|default:0 }}%"></div>
@@ -111,7 +111,7 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between">
                         <span>Marge brute</span>
-                        <strong class="{% if profit_margin > 0 %}text-success{% else %}text-danger{% endif %}">{{ profit_margin|floatformat:1 }}%</strong>
+                        <strong class="{% if profit_margin > 0 %}text-success{% else %}text-danger{% endif %}">{{ profit_margin|floatformat:2 }}%</strong>
                     </div>
                     <div class="progress mt-1">
                         {% with margin_width=profit_margin|floatformat:0|add:0|default:0 %}

@@ -1,8 +1,11 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
 from .models import GlassProduct
+from .resources import GlassProductResource
 
 @admin.register(GlassProduct)
-class GlassProductAdmin(admin.ModelAdmin):
+class GlassProductAdmin(ImportExportModelAdmin):
+    resource_class = GlassProductResource
     list_display = ('code', 'name', 'glass_type', 'thickness', 'color', 'selling_price', 'stock_quantity', 'is_low_stock', 'status')
     list_filter = ('glass_type', 'thickness', 'color', 'finish', 'status', 'supplier')
     search_fields = ('code', 'name', 'description')

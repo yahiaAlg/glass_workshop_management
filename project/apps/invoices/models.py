@@ -91,7 +91,7 @@ class Invoice(models.Model):
         
         # Calculate total
         self.total_amount = taxable_amount + self.tax_amount
-        
+        print(" the total amount is ", self.total_amount)
         self.save()
 
 class InvoiceItem(models.Model):

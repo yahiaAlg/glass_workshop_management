@@ -130,7 +130,7 @@
                                             <br><small class="text-muted">Épaisseur: {{ item.thickness }}</small>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">{{ item.quantity|floatformat:1 }}</td>
+                                    <td class="text-center">{{ item.quantity|floatformat:2 }}</td>
                                     <td class="text-end">{{ item.unit_price|floatformat:2 }}DA</td>
                                     <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}DA</strong></td>
                                 </tr>

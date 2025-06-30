@@ -146,9 +146,9 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="text-center">{{ item.width|floatformat:1 }} × {{ item.height|floatformat:1 }} cm</td>
+                                        <td class="text-center">{{ item.width|floatformat:2 }} × {{ item.height|floatformat:2 }} cm</td>
                                         <td class="text-center">{{ item.surface|floatformat:2 }} m²</td>
-                                        <td class="text-center">{{ item.quantity|floatformat:1 }}</td>
+                                        <td class="text-center">{{ item.quantity|floatformat:2 }}</td>
                                         <td class="text-end">{{ item.unit_price|floatformat:2 }}DA</td>
                                         <td class="text-end"><strong>{{ item.subtotal|floatformat:2 }}DA</strong></td>
                                         <td>{{ item.notes|default:"-" }}</td>

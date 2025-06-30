@@ -34,7 +34,7 @@
                                 <h6><strong>{{ product.name }}</strong></h6>
                                 <p class="mb-1">Code: {{ product.code }}</p>
                                 <p class="mb-1">Type: {{ product.get_glass_type_display }}</p>
-                                <p class="mb-0">Stock: {{ product.stock_quantity|floatformat:1 }} {{ product.get_unit_display }}</p>
+                                <p class="mb-0">Stock: {{ product.stock_quantity|floatformat:2 }} {{ product.get_unit_display }}</p>
                             </div>
                         </div>
                     </div>

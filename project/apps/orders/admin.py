@@ -1,5 +1,7 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
 from .models import Order, OrderItem
+from .resources import OrderResource, OrderItemResource
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
@@ -8,7 +10,8 @@ class OrderItemInline(admin.TabularInline):
     fields = ('product', 'quantity', 'unit_price', 'subtotal', 'notes')
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(ImportExportModelAdmin):
+    resource_class = OrderResource
     list_display = ('order_number', 'customer', 'order_date', 'delivery_date', 'status', 'total_amount', 'installation_required')
     list_filter = ('status', 'installation_required', 'order_date', 'delivery_date')
     search_fields = ('order_number', 'customer__name')
@@ -43,7 +46,8 @@ class OrderAdmin(admin.ModelAdmin):
     mark_as_delivered.short_description = "Marquer comme livrée"
 
 @admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
+class OrderItemAdmin(ImportExportModelAdmin):
+    resource_class = OrderItemResource
     list_display = ('order', 'product', 'quantity', 'unit_price', 'subtotal')
     list_filter = ('order__status', 'product__glass_type')
     search_fields = ('order__order_number', 'product__name')

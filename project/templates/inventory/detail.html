@@ -65,7 +65,7 @@
                             </tr>
                             <tr>
                                 <td><strong>Marge bénéficiaire:</strong></td>
-                                <td><span class="badge bg-success">{{ product.profit_margin|floatformat:1 }}%</span></td>
+                                <td><span class="badge bg-success">{{ product.profit_margin|floatformat:2 }}%</span></td>
                             </tr>
                             <tr>
                                 <td><strong>Unité de mesure:</strong></td>
@@ -109,7 +109,7 @@
                             <div class="border rounded p-3">
                                 <h6>Stock Actuel</h6>
                                 <h4 class="{% if product.is_low_stock %}text-warning{% else %}text-success{% endif %}">
-                                    {{ product.stock_quantity|floatformat:1 }}
+                                    {{ product.stock_quantity|floatformat:2 }}
                                 </h4>
                                 <small class="text-muted">{{ product.get_unit_display }}</small>
                             </div>
@@ -117,7 +117,7 @@
                         <div class="col-md-4">
                             <div class="border rounded p-3">
                                 <h6>Stock Minimum</h6>
-                                <h4>{{ product.minimum_stock|floatformat:1 }}</h4>
+                                <h4>{{ product.minimum_stock|floatformat:2 }}</h4>
                                 <small class="text-muted">{{ product.get_unit_display }}</small>
                             </div>
                         </div>

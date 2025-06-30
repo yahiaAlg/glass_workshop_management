@@ -1,8 +1,11 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
 from .models import Customer
+from .resources import CustomerResource
 
 @admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin):
+class CustomerAdmin(ImportExportModelAdmin):
+    resource_class = CustomerResource
     list_display = ('name', 'customer_type', 'phone', 'email', 'status', 'created_at')
     list_filter = ('customer_type', 'status', 'created_at')
     search_fields = ('name', 'phone', 'email', 'contact_person')

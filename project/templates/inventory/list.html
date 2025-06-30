@@ -255,14 +255,14 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <span class="{% if product.is_low_stock %}text-warning fw-bold{% endif %}">
-                                                {{ product.stock_quantity|floatformat:1 }}
+                                                {{ product.stock_quantity|floatformat:2 }}
                                             </span>
                                             <small class="text-muted ms-1">{{ product.get_unit_display }}</small>
                                             {% if product.is_low_stock %}
                                                 <i class="fas fa-exclamation-triangle text-warning ms-1" title="Stock faible"></i>
                                             {% endif %}
                                         </div>
-                                        <small class="text-muted">Min: {{ product.minimum_stock|floatformat:1 }}</small>
+                                        <small class="text-muted">Min: {{ product.minimum_stock|floatformat:2 }}</small>
                                     </td>
                                     <td><strong>{{ product.selling_price|floatformat:2 }}DA</strong></td>
                                     <td><span class="text-muted">{{ product.cost_price|floatformat:2 }}DA</span></td>

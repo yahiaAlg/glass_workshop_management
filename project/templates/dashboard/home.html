@@ -180,8 +180,8 @@
                                     <small class="text-muted">{{ product.code }}</small>
                                 </div>
                                 <div class="text-end">
-                                    <span class="badge bg-warning text-dark">{{ product.stock_quantity|floatformat:1 }}</span><br>
-                                    <small class="text-muted">Min: {{ product.minimum_stock|floatformat:1 }}</small>
+                                    <span class="badge bg-warning text-dark">{{ product.stock_quantity|floatformat:2 }}</span><br>
+                                    <small class="text-muted">Min: {{ product.minimum_stock|floatformat:2 }}</small>
                                 </div>
                             </div>
                         {% endfor %}

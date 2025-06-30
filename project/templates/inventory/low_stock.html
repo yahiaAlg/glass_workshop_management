@@ -57,12 +57,12 @@
                                 <td>
                                     <span class="text-warning fw-bold">
                                         <i class="fas fa-exclamation-triangle me-1"></i>
-                                        {{ product.stock_quantity|floatformat:1 }}
+                                        {{ product.stock_quantity|floatformat:2 }}
                                     </span>
                                     <small class="text-muted">{{ product.get_unit_display }}</small>
                                 </td>
                                 <td>
-                                    <span class="text-success">{{ product.minimum_stock|floatformat:1 }}</span>
+                                    <span class="text-success">{{ product.minimum_stock|floatformat:2 }}</span>
                                     <small class="text-muted">{{ product.get_unit_display }}</small>
                                 </td>
                                 <td>

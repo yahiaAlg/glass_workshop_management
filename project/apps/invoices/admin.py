@@ -1,5 +1,7 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
 from .models import Invoice, InvoiceItem, InvoiceService, Payment
+from .resources import InvoiceResource, InvoiceItemResource, InvoiceServiceResource, PaymentResource
 
 class InvoiceItemInline(admin.TabularInline):
     model = InvoiceItem
@@ -19,7 +21,8 @@ class PaymentInline(admin.TabularInline):
     fields = ('payment_date', 'amount', 'payment_method', 'reference', 'status', 'notes')
 
 @admin.register(Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(ImportExportModelAdmin):
+    resource_class = InvoiceResource
     list_display = ('invoice_number', 'customer', 'invoice_date', 'due_date', 'status', 'total_amount', 'payment_method')
     list_filter = ('status', 'payment_method', 'invoice_date', 'due_date')
     search_fields = ('invoice_number', 'customer__name')
@@ -32,7 +35,7 @@ class InvoiceAdmin(admin.ModelAdmin):
             'fields': ('invoice_number', 'customer', 'order', 'status', 'created_by')
         }),
         ('Dates', {
-            'fields': ('invoice_date', 'due_date', 'delivery_date')
+            'fields': ( 'due_date', 'delivery_date')
         }),
         ('Livraison et installation', {
             'fields': ('delivery_address', 'installation_notes', 'warranty_info')
@@ -66,20 +69,23 @@ class InvoiceAdmin(admin.ModelAdmin):
     recalculate_totals.short_description = "Recalculer les totaux"
 
 @admin.register(InvoiceItem)
-class InvoiceItemAdmin(admin.ModelAdmin):
+class InvoiceItemAdmin(ImportExportModelAdmin):
+    resource_class = InvoiceItemResource
     list_display = ('invoice', 'product', 'quantity', 'unit_price', 'subtotal', 'width', 'height')
     list_filter = ('product__glass_type', 'thickness')
     search_fields = ('invoice__invoice_number', 'product__name', 'description')
     readonly_fields = ('subtotal',)
 
 @admin.register(InvoiceService)
-class InvoiceServiceAdmin(admin.ModelAdmin):
+class InvoiceServiceAdmin(ImportExportModelAdmin):
+    resource_class = InvoiceServiceResource
     list_display = ('invoice', 'service_type', 'description', 'amount')
     list_filter = ('service_type',)
     search_fields = ('invoice__invoice_number', 'description')
 
 @admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
+class PaymentAdmin(ImportExportModelAdmin):
+    resource_class = PaymentResource
     list_display = ('invoice', 'payment_date', 'amount', 'payment_method', 'status', 'reference')
     list_filter = ('payment_method', 'status', 'payment_date')
     search_fields = ('invoice__invoice_number', 'reference')
