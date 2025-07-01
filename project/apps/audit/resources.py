@@ -18,6 +18,8 @@ class ExpenseCategoryResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False
 
 class RevenueCategoryResource(resources.ModelResource):
     created_at = fields.Field(
@@ -31,17 +33,19 @@ class RevenueCategoryResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False
 
 class AdditionalExpenseResource(resources.ModelResource):
     category = fields.Field(
         column_name='category',
         attribute='category',
-        widget=ForeignKeyWidget('audit.ExpenseCategory', 'name')
+        widget=ForeignKeyWidget('audit.ExpenseCategory', field='name')
     )
     created_by = fields.Field(
         column_name='created_by',
         attribute='created_by',
-        widget=ForeignKeyWidget('authentication.User', 'username')
+        widget=ForeignKeyWidget('authentication.User', field='username')
     )
     date = fields.Field(
         attribute='date',
@@ -66,17 +70,19 @@ class AdditionalExpenseResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False
 
 class AdditionalRevenueResource(resources.ModelResource):
     category = fields.Field(
         column_name='category',
         attribute='category',
-        widget=ForeignKeyWidget('audit.RevenueCategory', 'name')
+        widget=ForeignKeyWidget('audit.RevenueCategory', field='name')
     )
     created_by = fields.Field(
         column_name='created_by',
         attribute='created_by',
-        widget=ForeignKeyWidget('authentication.User', 'username')
+        widget=ForeignKeyWidget('authentication.User', field='username')
     )
     date = fields.Field(
         attribute='date',
@@ -101,3 +107,5 @@ class AdditionalRevenueResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False

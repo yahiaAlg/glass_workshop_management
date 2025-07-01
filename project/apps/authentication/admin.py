@@ -43,12 +43,7 @@ class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"users_export_{timestamp}.{file_format.get_extension()}"
     
-    def get_import_data_kwargs(self, request, **kwargs):
-        """Customize import data kwargs"""
-        kwargs.update({
-            'user': request.user,
-        })
-        return kwargs
+    # REMOVED: get_import_data_kwargs method that was causing the conflict
     
     # Custom admin methods
     def get_queryset(self, request):

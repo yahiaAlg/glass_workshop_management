@@ -1,13 +1,16 @@
 # apps/inventory/resources.py
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget, DateWidget
+
+from apps.suppliers.models import Supplier
 from .models import GlassProduct
 
 class GlassProductResource(resources.ModelResource):
     supplier = fields.Field(
         column_name='supplier',
         attribute='supplier',
-        widget=ForeignKeyWidget('suppliers.Supplier', 'name')
+        widget=ForeignKeyWidget(Supplier, field='name'),
+        saves_null_values=False  # Skip if supplier not found
     )
     created_at = fields.Field(
         attribute='created_at',
@@ -29,3 +32,5 @@ class GlassProductResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False

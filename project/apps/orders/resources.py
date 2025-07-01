@@ -1,69 +1,78 @@
 # apps/orders/resources.py
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget, DateWidget
+from .models import Order, OrderItem
+from apps.customers.models import Customer
+from apps.inventory.models import GlassProduct
 
-# Assuming Order model structure based on Invoice foreign key
+            
+            
 class OrderResource(resources.ModelResource):
     customer = fields.Field(
         column_name='customer',
         attribute='customer',
-        widget=ForeignKeyWidget('customers.Customer', 'name')
-    )
-    created_by = fields.Field(
-        column_name='created_by',
-        attribute='created_by',
-        widget=ForeignKeyWidget('authentication.User', 'username')
+        widget=ForeignKeyWidget(Customer, 'name')
     )
     order_date = fields.Field(
+        column_name='order_date',
         attribute='order_date',
-        widget=DateWidget(format='%Y-%m-%d')
+        widget=DateWidget('%Y-%m-%d %H:%M:%S')
     )
     delivery_date = fields.Field(
+        column_name='delivery_date',
         attribute='delivery_date',
-        widget=DateWidget(format='%Y-%m-%d')
-    )
-    created_at = fields.Field(
-        attribute='created_at',
-        widget=DateWidget(format='%Y-%m-%d %H:%M:%S')
-    )
-    updated_at = fields.Field(
-        attribute='updated_at',
-        widget=DateWidget(format='%Y-%m-%d %H:%M:%S')
+        widget=DateWidget('%Y-%m-%d')
     )
     
     class Meta:
-        # model = Order  # Uncomment when Order model is available
+        model = Order
         fields = (
             'id', 'order_number', 'customer', 'order_date', 'delivery_date',
-            'status', 'total_amount', 'notes', 'created_by', 'created_at', 'updated_at'
+            'status', 'delivery_address', 'installation_required', 'notes',
+            'total_amount'
         )
         export_order = fields
-        import_id_fields = ('id',)
-        date_field = 'created_at'
+        import_id_fields = ('order_number',)
+    
+    def before_import_row(self, row, **kwargs):
+        # Auto-generate order number if not provided
+        if not row.get('order_number'):
+            row['order_number'] = ''
+    
+    def after_save_instance(self, instance, row, **kwargs):
+        if not kwargs.get('dry_run', False):
+            instance.calculate_total()
+
 
 class OrderItemResource(resources.ModelResource):
     order = fields.Field(
         column_name='order',
         attribute='order',
-        widget=ForeignKeyWidget('orders.Order', 'order_number')
+        widget=ForeignKeyWidget(Order, 'order_number')
     )
     product = fields.Field(
         column_name='product',
         attribute='product',
-        widget=ForeignKeyWidget('inventory.GlassProduct', 'name')
+        widget=ForeignKeyWidget(GlassProduct, 'name')
     )
-    created_at = fields.Field(
-        attribute='created_at',
-        widget=DateWidget(format='%Y-%m-%d %H:%M:%S')
+    surface = fields.Field(
+        column_name='surface_m2',
+        attribute='surface',
+        readonly=True
     )
     
     class Meta:
-        # model = OrderItem  # Uncomment when OrderItem model is available
+        model = OrderItem
         fields = (
-            'id', 'order', 'product', 'description', 'quantity',
-            'unit_price', 'subtotal', 'width', 'height', 'thickness',
-            'created_at'
+            'id', 'order', 'product', 'width', 'height', 'quantity',
+            'unit_price', 'subtotal', 'surface', 'notes'
         )
         export_order = fields
         import_id_fields = ('id',)
-        date_field = 'created_at'
+    
+    def dehydrate_surface(self, orderitem):
+        return float(orderitem.surface)
+    
+    def after_save_instance(self, instance, row, **kwargs):
+        if not kwargs.get('dry_run', False):
+            instance.order.calculate_total()

@@ -76,13 +76,12 @@ class UserResource(resources.ModelResource):
             if row['role'] not in valid_roles:
                 row['role'] = 'worker'  # Default to worker if invalid
     
-    def after_save_instance(self, instance, using_transactions, dry_run):
-        """Actions after saving instance"""
-        if not dry_run:
-            # Set password if it's a new user and no password is set
-            if not instance.password:
-                instance.set_password('changeme123')  # Default password
-                instance.save()
+    def after_save_instance(self, instance, row, **kwargs):
+        """Actions after saving instance - FIXED SIGNATURE"""
+        # Set password if it's a new user and no password is set
+        if not instance.password:
+            instance.set_password('changeme123')  # Default password
+            instance.save()
     
     def skip_row(self, instance, original, row, import_validation_errors=None):
         """Skip rows based on custom logic"""

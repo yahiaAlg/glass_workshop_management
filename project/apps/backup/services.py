@@ -1,5 +1,6 @@
 # apps/backup/services.py
 import io
+import os
 import zipfile
 import json
 from datetime import datetime
@@ -240,144 +241,271 @@ class BackupService:
             self.backup_job.status = 'processing'
             self.backup_job.save()
             
-            format_class = self.format_registry.get(self.backup_job.format)
-            if not format_class:
+            # Validate file first
+            if not self.backup_job.import_file:
+                raise ValueError("No import file provided")
+            
+            # Check file extension and format compatibility
+            filename = self.backup_job.import_file.name.lower()
+            
+            if self.backup_job.format == 'json':
+                if not filename.endswith('.json'):
+                    raise ValueError("JSON format selected but file is not .json")
+                return self._import_json_file()
+            elif self.backup_job.format == 'csv':
+                if filename.endswith('.zip'):
+                    return self._import_csv_zip()
+                elif filename.endswith('.csv'):
+                    return self._import_single_csv()
+                else:
+                    raise ValueError("CSV format selected but file is not .csv or .zip")
+            elif self.backup_job.format == 'excel':
+                if not (filename.endswith('.xlsx') or filename.endswith('.xls')):
+                    raise ValueError("Excel format selected but file is not .xlsx or .xls")
+                return self._import_excel_file()
+            else:
                 raise ValueError(f"Unsupported format: {self.backup_job.format}")
-            
-            format_instance = format_class()
-            
-            with self.backup_job.import_file.open('rb') as f:
-                if self.backup_job.format == 'csv' and self.backup_job.import_file.name.endswith('.zip'):
-                    return self._import_csv_archive(f, format_instance)
-                elif self.backup_job.format == 'excel':
-                    return self._import_excel_workbook(f, format_instance)
-                else:  # JSON
-                    return self._import_json_single(f, format_instance)
-                    
+                
         except Exception as e:
             self.backup_job.status = 'failed'
             self.backup_job.add_log(f"Import error: {str(e)}")
             self.backup_job.save()
             raise
     
-    def _import_excel_workbook(self, file_obj, format_instance):
-        """Import from Excel workbook using tablib"""
-        from tablib import Databook
-        
-        # Load the databook using format instance
-        content = file_obj.read()
-        databook = Databook().load(content, format='xlsx')
-        
-        imported_count = 0
-        
-        for dataset in databook.sheets():
-            # Match sheet title to resource name
-            sheet_title = getattr(dataset, 'title', '').lower().replace(' ', '_')
-            
-            if sheet_title in self.resources:
-                resource = self.resources[sheet_title]
-                imported_count += self._import_dataset(resource, dataset, sheet_title)
-        
-        self._complete_import(imported_count)
-        return imported_count
-    
-    def _import_json_single(self, file_obj, format_instance):
+    def _import_json_file(self):
         """Import from JSON file"""
-        content = file_obj.read()
+        self.backup_job.add_log("Starting JSON import")
         
         try:
-            # Parse JSON directly
-            json_data = json.loads(content.decode('utf-8'))
+            with self.backup_job.import_file.open('r', encoding='utf-8') as f:
+                json_data = json.load(f)
+            
+            self.backup_job.add_log(f"JSON loaded with {len(json_data)} data sections")
             
             imported_count = 0
             
             for resource_name, records in json_data.items():
+                self.backup_job.add_log(f"Processing {resource_name} with {len(records) if records else 0} records")
+                
                 if resource_name in self.resources and records:
                     resource = self.resources[resource_name]
                     
-                    # Create new dataset for this resource
-                    resource_dataset = Dataset()
+                    # Create dataset from JSON data
+                    dataset = Dataset()
                     if records and isinstance(records, list) and len(records) > 0:
                         # Get headers from first record
                         headers = list(records[0].keys())
-                        resource_dataset.headers = headers
+                        dataset.headers = headers
                         
                         # Add data rows
                         for record in records:
-                            row = [record.get(h, '') for h in headers]
-                            resource_dataset.append(row)
-                    
-                    imported_count += self._import_dataset(resource, resource_dataset, resource_name)
-        
-        except json.JSONDecodeError as e:
-            self.backup_job.add_log(f"JSON parse error: {str(e)}")
-            imported_count = 0
-        
-        self._complete_import(imported_count)
-        return imported_count
-    
-    def _import_csv_archive(self, file_obj, format_instance):
-        """Import from ZIP archive with CSV files"""
-        imported_count = 0
-        
-        with zipfile.ZipFile(file_obj, 'r') as zip_file:
-            for filename in zip_file.namelist():
-                if filename.endswith('.csv'):
-                    resource_name = filename[:-4]  # Remove .csv extension
-                    
-                    if resource_name in self.resources:
-                        resource = self.resources[resource_name]
-                        
-                        # Read and load CSV content
-                        csv_content = zip_file.read(filename)
-                        dataset = Dataset()
-                        dataset.load(csv_content, format='csv')
+                            row = [record.get(h) for h in headers]
+                            dataset.append(row)
                         
                         imported_count += self._import_dataset(resource, dataset, resource_name)
+                    else:
+                        self.backup_job.add_log(f"No valid records found for {resource_name}")
+                else:
+                    if resource_name not in self.resources:
+                        self.backup_job.add_log(f"Resource {resource_name} not available for import")
+                    else:
+                        self.backup_job.add_log(f"No records found for {resource_name}")
+            
+            self._complete_import(imported_count)
+            return imported_count
+            
+        except json.JSONDecodeError as e:
+            self.backup_job.add_log(f"JSON parse error: {str(e)}")
+            raise ValueError(f"Invalid JSON file: {str(e)}")
+        except Exception as e:
+            self.backup_job.add_log(f"JSON import error: {str(e)}")
+            raise
+    
+    def _import_csv_zip(self):
+        """Import from ZIP archive containing CSV files"""
+        self.backup_job.add_log("Starting CSV ZIP import")
         
-        self._complete_import(imported_count)
-        return imported_count
+        imported_count = 0
+        
+        try:
+            with self.backup_job.import_file.open('rb') as f:
+                with zipfile.ZipFile(f, 'r') as zip_file:
+                    csv_files = [name for name in zip_file.namelist() if name.endswith('.csv')]
+                    self.backup_job.add_log(f"Found {len(csv_files)} CSV files in ZIP")
+                    
+                    for filename in csv_files:
+                        # Extract resource name from filename
+                        resource_name = os.path.splitext(os.path.basename(filename))[0]
+                        
+                        self.backup_job.add_log(f"Processing CSV file: {filename} -> {resource_name}")
+                        
+                        if resource_name in self.resources:
+                            resource = self.resources[resource_name]
+                            
+                            # Read CSV content
+                            csv_content = zip_file.read(filename)
+                            
+                            # Create dataset
+                            dataset = Dataset()
+                            dataset.load(csv_content.decode('utf-8'), format='csv')
+                            
+                            if len(dataset) > 0:
+                                imported_count += self._import_dataset(resource, dataset, resource_name)
+                            else:
+                                self.backup_job.add_log(f"No data found in {filename}")
+                        else:
+                            self.backup_job.add_log(f"Resource {resource_name} not available for import")
+            
+            self._complete_import(imported_count)
+            return imported_count
+            
+        except zipfile.BadZipFile:
+            raise ValueError("Invalid ZIP file")
+        except Exception as e:
+            self.backup_job.add_log(f"CSV ZIP import error: {str(e)}")
+            raise
+    
+    def _import_single_csv(self):
+        """Import from single CSV file"""
+        self.backup_job.add_log("Starting single CSV import")
+        
+        try:
+            # For single CSV, we need to determine which resource to use
+            # This could be based on filename or user selection
+            if len(self.resources) != 1:
+                raise ValueError("Single CSV import requires exactly one resource to be selected")
+            
+            resource_name, resource = next(iter(self.resources.items()))
+            
+            with self.backup_job.import_file.open('r', encoding='utf-8') as f:
+                csv_content = f.read()
+            
+            dataset = Dataset()
+            dataset.load(csv_content, format='csv')
+            
+            if len(dataset) > 0:
+                imported_count = self._import_dataset(resource, dataset, resource_name)
+            else:
+                imported_count = 0
+                self.backup_job.add_log("No data found in CSV file")
+            
+            self._complete_import(imported_count)
+            return imported_count
+            
+        except Exception as e:
+            self.backup_job.add_log(f"Single CSV import error: {str(e)}")
+            raise
+    
+    def _import_excel_file(self):
+        """Import from Excel file with multiple worksheets"""
+        self.backup_job.add_log("Starting Excel import")
+        
+        try:
+            from tablib import Databook
+            
+            with self.backup_job.import_file.open('rb') as f:
+                content = f.read()
+                
+            # Load as databook to handle multiple sheets
+            databook = Databook()
+            databook.load(content, format='xlsx')
+            
+            self.backup_job.add_log(f"Excel file loaded with {len(databook.sheets())} sheets")
+            
+            imported_count = 0
+            
+            for dataset in databook.sheets():
+                # Get sheet title/name
+                sheet_name = getattr(dataset, 'title', 'Unknown').lower().replace(' ', '_')
+                
+                self.backup_job.add_log(f"Processing sheet: {sheet_name}")
+                
+                # Try to match sheet name to resource
+                matching_resource = None
+                for resource_name, resource in self.resources.items():
+                    if resource_name.lower() == sheet_name.lower() or sheet_name in resource_name.lower():
+                        matching_resource = (resource_name, resource)
+                        break
+                
+                if matching_resource:
+                    resource_name, resource = matching_resource
+                    if len(dataset) > 0:
+                        imported_count += self._import_dataset(resource, dataset, resource_name)
+                    else:
+                        self.backup_job.add_log(f"No data found in sheet {sheet_name}")
+                else:
+                    self.backup_job.add_log(f"No matching resource found for sheet {sheet_name}")
+            
+            self._complete_import(imported_count)
+            return imported_count
+            
+        except Exception as e:
+            self.backup_job.add_log(f"Excel import error: {str(e)}")
+            raise
     
     def _import_dataset(self, resource, dataset, resource_name):
         """Import a single dataset using resource"""
         try:
             if not dataset or len(dataset) == 0:
+                self.backup_job.add_log(f"No data to import for {resource_name}")
                 return 0
+            
+            self.backup_job.add_log(f"Starting import of {len(dataset)} records for {resource_name}")
             
             # Perform dry run first
             dry_result = resource.import_data(dataset, dry_run=True)
             
             if dry_result.has_errors():
-                for error in dry_result.row_errors():
-                    self.backup_job.add_log(f"Validation error in {resource_name}: {error}")
-                    self.backup_job.error_count += 1
+                self.backup_job.add_log(f"Validation errors found for {resource_name}:")
+                # Fix: Properly handle row_errors() return format
+                for row_num, row_errors in dry_result.row_errors():
+                    for error in row_errors:
+                        self.backup_job.add_log(f"  Row {row_num + 1}: {error.error}")
+                        self.backup_job.error_count += 1
+                
+                # Also check for non-row errors
+                if hasattr(dry_result, 'base_errors') and dry_result.base_errors:
+                    for error in dry_result.base_errors:
+                        self.backup_job.add_log(f"  General error: {error.error}")
+                        self.backup_job.error_count += 1
+                
+                # Don't proceed with import if there are validation errors
+                self.backup_job.add_log(f"Skipping import for {resource_name} due to validation errors")
                 return 0
             
             # Perform actual import
+            self.backup_job.add_log(f"Validation passed, proceeding with import for {resource_name}")
             result = resource.import_data(dataset, dry_run=False)
             
-            imported_records = len([row for row in result.rows if not row.errors])
-            self.backup_job.add_log(f"Imported {imported_records} {resource_name} records")
+            # Count successful imports
+            successful_imports = 0
+            if hasattr(result, 'rows'):
+                for row in result.rows:
+                    if not row.errors:
+                        successful_imports += 1
+                    else:
+                        for error in row.errors:
+                            self.backup_job.add_log(f"Import error: {error.error}")
+                            self.backup_job.error_count += 1
+            else:
+                # Fallback: assume all rows imported successfully if no errors
+                successful_imports = len(dataset)
             
-            # Log any import errors
-            if result.has_errors():
-                for error in result.row_errors():
-                    self.backup_job.add_log(f"Import error in {resource_name}: {error}")
-                    self.backup_job.error_count += 1
-            
-            return imported_records
+            self.backup_job.add_log(f"Successfully imported {successful_imports} {resource_name} records")
+            return successful_imports
             
         except Exception as e:
             self.backup_job.add_log(f"Error importing {resource_name}: {str(e)}")
             self.backup_job.error_count += 1
             return 0
-    
+            
     def _complete_import(self, imported_count):
         """Mark import as completed"""
         self.backup_job.processed_records = imported_count
         self.backup_job.status = 'completed'
         self.backup_job.completed_at = datetime.now()
         self.backup_job.save()
+        self.backup_job.add_log(f"Import completed. Total records imported: {imported_count}")
     
     def _get_filtered_queryset(self, resource):
         """Apply date filters to resource queryset"""
@@ -416,42 +544,96 @@ class BackupService:
     def validate_import_file(self):
         """Validate import file format and structure"""
         try:
-            format_class = self.format_registry.get(self.backup_job.format)
-            if not format_class:
-                return False, f"Unsupported format: {self.backup_job.format}"
+            if not self.backup_job.import_file:
+                return False, "No import file provided"
             
-            format_instance = format_class()
+            filename = self.backup_job.import_file.name.lower()
             
-            with self.backup_job.import_file.open('rb') as f:
-                if self.backup_job.format == 'csv' and self.backup_job.import_file.name.endswith('.zip'):
-                    return self._validate_csv_archive(f)
+            if self.backup_job.format == 'json':
+                if not filename.endswith('.json'):
+                    return False, "JSON format selected but file is not .json"
+                return self._validate_json_file()
+            elif self.backup_job.format == 'csv':
+                if filename.endswith('.zip'):
+                    return self._validate_csv_zip()
+                elif filename.endswith('.csv'):
+                    return self._validate_single_csv()
                 else:
-                    content = f.read()
-                    try:
-                        # Test if format can read the content
-                        dataset = Dataset()
-                        dataset.load(content, format=self.backup_job.format)
-                        return True, "File format is valid"
-                    except Exception as e:
-                        return False, f"Invalid file format: {str(e)}"
-                        
+                    return False, "CSV format selected but file is not .csv or .zip"
+            elif self.backup_job.format == 'excel':
+                if not (filename.endswith('.xlsx') or filename.endswith('.xls')):
+                    return False, "Excel format selected but file is not .xlsx or .xls"
+                return self._validate_excel_file()
+            else:
+                return False, f"Unsupported format: {self.backup_job.format}"
+                
         except Exception as e:
             return False, f"Validation error: {str(e)}"
     
-    def _validate_csv_archive(self, file_obj):
-        """Validate CSV archive structure"""
+    def _validate_json_file(self):
+        """Validate JSON file structure"""
         try:
-            with zipfile.ZipFile(file_obj, 'r') as zip_file:
-                csv_files = [f for f in zip_file.namelist() if f.endswith('.csv')]
-                if not csv_files:
-                    return False, "No CSV files found in archive"
-                
-                # Test read first CSV file
-                first_csv = zip_file.read(csv_files[0])
-                dataset = Dataset()
-                dataset.load(first_csv, format='csv')
-                
-                return True, f"Valid CSV archive with {len(csv_files)} files"
-                
+            with self.backup_job.import_file.open('r', encoding='utf-8') as f:
+                json_data = json.load(f)
+            
+            if not isinstance(json_data, dict):
+                return False, "JSON file must contain an object with data sections"
+            
+            return True, f"Valid JSON file with {len(json_data)} data sections"
+            
+        except json.JSONDecodeError as e:
+            return False, f"Invalid JSON format: {str(e)}"
         except Exception as e:
-            return False, f"Invalid CSV archive: {str(e)}"
+            return False, f"JSON validation error: {str(e)}"
+    
+    def _validate_csv_zip(self):
+        """Validate CSV ZIP archive"""
+        try:
+            with self.backup_job.import_file.open('rb') as f:
+                with zipfile.ZipFile(f, 'r') as zip_file:
+                    csv_files = [name for name in zip_file.namelist() if name.endswith('.csv')]
+                    
+                    if not csv_files:
+                        return False, "No CSV files found in ZIP archive"
+                    
+                    # Test first CSV file
+                    first_csv = zip_file.read(csv_files[0])
+                    dataset = Dataset()
+                    dataset.load(first_csv.decode('utf-8'), format='csv')
+                    
+                    return True, f"Valid CSV ZIP archive with {len(csv_files)} files"
+                    
+        except zipfile.BadZipFile:
+            return False, "Invalid ZIP file"
+        except Exception as e:
+            return False, f"CSV ZIP validation error: {str(e)}"
+    
+    def _validate_single_csv(self):
+        """Validate single CSV file"""
+        try:
+            with self.backup_job.import_file.open('r', encoding='utf-8') as f:
+                content = f.read()
+            
+            dataset = Dataset()
+            dataset.load(content, format='csv')
+            
+            return True, f"Valid CSV file with {len(dataset)} rows"
+            
+        except Exception as e:
+            return False, f"CSV validation error: {str(e)}"
+    
+    def _validate_excel_file(self):
+        """Validate Excel file"""
+        try:
+            from tablib import Databook
+            
+            with self.backup_job.import_file.open('rb') as f:
+                content = f.read()
+            
+            databook = Databook()
+            databook.load(content, format='xlsx')
+            
+            return True, f"Valid Excel file with {len(databook.sheets())} sheets"
+            
+        except Exception as e:
+            return False, f"Excel validation error: {str(e)}"

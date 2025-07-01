@@ -2,22 +2,26 @@
 from import_export import resources, fields
 from import_export.widgets import ForeignKeyWidget, DateWidget
 from .models import Invoice, InvoiceItem, InvoiceService, Payment
+from apps.authentication.models import User
 
 class InvoiceResource(resources.ModelResource):
     customer = fields.Field(
         column_name='customer',
         attribute='customer',
-        widget=ForeignKeyWidget('customers.Customer', 'name')
+        widget=ForeignKeyWidget('customers.Customer', field='name')
     )
     order = fields.Field(
         column_name='order',
         attribute='order',
-        widget=ForeignKeyWidget('orders.Order', 'order_number')
+        widget=ForeignKeyWidget('orders.Order', field='order_number'),
+        saves_null_values=False  # Skip if order not found
     )
     created_by = fields.Field(
         column_name='created_by',
         attribute='created_by',
-        widget=ForeignKeyWidget('authentication.User', 'username')
+        widget=ForeignKeyWidget(User, field='username'),
+        saves_null_values=False  # Skip if user not found
+        
     )
     invoice_date = fields.Field(
         attribute='invoice_date',
@@ -52,17 +56,19 @@ class InvoiceResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False
 
 class InvoiceItemResource(resources.ModelResource):
     invoice = fields.Field(
         column_name='invoice',
         attribute='invoice',
-        widget=ForeignKeyWidget('invoices.Invoice', 'invoice_number')
+        widget=ForeignKeyWidget('invoices.Invoice', field='invoice_number')
     )
     product = fields.Field(
         column_name='product',
         attribute='product',
-        widget=ForeignKeyWidget('inventory.GlassProduct', 'name')
+        widget=ForeignKeyWidget('inventory.GlassProduct', field='name')
     )
     created_at = fields.Field(
         attribute='created_at',
@@ -79,12 +85,14 @@ class InvoiceItemResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False
 
 class InvoiceServiceResource(resources.ModelResource):
     invoice = fields.Field(
         column_name='invoice',
         attribute='invoice',
-        widget=ForeignKeyWidget('invoices.Invoice', 'invoice_number')
+        widget=ForeignKeyWidget('invoices.Invoice', field='invoice_number')
     )
     created_at = fields.Field(
         attribute='created_at',
@@ -100,12 +108,14 @@ class InvoiceServiceResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False
 
 class PaymentResource(resources.ModelResource):
     invoice = fields.Field(
         column_name='invoice',
         attribute='invoice',
-        widget=ForeignKeyWidget('invoices.Invoice', 'invoice_number')
+        widget=ForeignKeyWidget('invoices.Invoice', field='invoice_number')
     )
     payment_date = fields.Field(
         attribute='payment_date',
@@ -125,3 +135,5 @@ class PaymentResource(resources.ModelResource):
         export_order = fields
         import_id_fields = ('id',)
         date_field = 'created_at'
+        skip_unchanged = True
+        report_skipped = False

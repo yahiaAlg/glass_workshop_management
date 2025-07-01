@@ -100,6 +100,6 @@ class GlassProduct(models.Model):
         return self.stock_quantity <= self.minimum_stock
     
     def profit_margin(self):
-        if self.cost_price > 0:
-            return ((self.selling_price - self.cost_price) / self.cost_price) * 100
-        return 0
+        if self.cost_price is None or self.selling_price is None or self.cost_price <= 0:
+            return 0
+        return ((self.selling_price - self.cost_price) / self.cost_price) * 100
