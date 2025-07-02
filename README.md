@@ -543,3 +543,22 @@ Generate simplified Django application with:
 This system provides essential glass shop management capabilities with professional invoicing, basic inventory control, and simple customer management while maintaining ease of use and efficient operations for a small to medium glass retail business.
 
 NOTICE: Create the Django files and templates for this glass shop project as per the simplified requirements. Use only Django, HTML, CSS, and JavaScript - no TypeScript, React, or Vue.
+
+for launching via powershell
+
+```
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+```
+# First-time setup
+.\launch.ps1 setup
+
+# Run development server
+.\launch.ps1 run
+
+# Other commands
+.\launch.ps1 migrate
+.\launch.ps1 shell
+.\launch.ps1 test
+```
