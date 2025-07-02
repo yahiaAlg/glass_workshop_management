@@ -46,14 +46,14 @@ class Command(BaseCommand):
         # Create customers
         customers = self.create_customers()
         
-        # # Create orders
-        # orders = self.create_orders(customers, products)
+        # Create orders
+        orders = self.create_orders(customers, products)
         
-        # # Create invoices
-        # invoices = self.create_invoices(customers, products, orders, users)
+        # Create invoices
+        invoices = self.create_invoices(customers, products, orders, users)
         
-        # # Create payments
-        # self.create_payments(invoices)
+        # Create payments
+        self.create_payments(invoices)
         
         self.stdout.write(
             self.style.SUCCESS(f'Successfully created sample data:')
@@ -63,9 +63,9 @@ class Command(BaseCommand):
         self.stdout.write(f'- Suppliers: {Supplier.objects.count()}')
         self.stdout.write(f'- Products: {GlassProduct.objects.count()}')
         self.stdout.write(f'- Customers: {Customer.objects.count()}')
-        # self.stdout.write(f'- Orders: {Order.objects.count()}')
-        # self.stdout.write(f'- Invoices: {Invoice.objects.count()}')
-        # self.stdout.write(f'- Payments: {Payment.objects.count()}')
+        self.stdout.write(f'- Orders: {Order.objects.count()}')
+        self.stdout.write(f'- Invoices: {Invoice.objects.count()}')
+        self.stdout.write(f'- Payments: {Payment.objects.count()}')
 
     def clear_data(self):
         """Clear all existing data"""
@@ -368,203 +368,203 @@ class Command(BaseCommand):
         
         return customers
 
-    # def create_orders(self, customers, products):
-    #     """Create sample orders"""
-    #     orders = []
+    def create_orders(self, customers, products):
+        """Create sample orders"""
+        orders = []
         
-    #     for i in range(8):
-    #         customer = random.choice(customers)
-    #         order_date = timezone.now() - timedelta(days=random.randint(1, 30))
-    #         delivery_date = order_date.date() + timedelta(days=random.randint(5, 15))
+        for i in range(8):
+            customer = random.choice(customers)
+            order_date = timezone.now() - timedelta(days=random.randint(1, 30))
+            delivery_date = order_date.date() + timedelta(days=random.randint(5, 15))
             
-    #         order = Order.objects.create(
-    #             customer=customer,
-    #             delivery_date=delivery_date,
-    #             status=random.choice(['pending', 'confirmed', 'delivered']),
-    #             delivery_address=customer.address,
-    #             installation_required=random.choice([True, False]),
-    #             notes=random.choice([
-    #                 'Livraison matin de préférence',
-    #                 'Appeler avant livraison',
-    #                 'Accès difficile - prévoir aide',
-    #                 ''
-    #             ])
-    #         )
-    #         order.created_at = order_date
-    #         order.save()
+            order = Order.objects.create(
+                customer=customer,
+                delivery_date=delivery_date,
+                status=random.choice(['pending', 'confirmed', 'delivered']),
+                delivery_address=customer.address,
+                installation_required=random.choice([True, False]),
+                notes=random.choice([
+                    'Livraison matin de préférence',
+                    'Appeler avant livraison',
+                    'Accès difficile - prévoir aide',
+                    ''
+                ])
+            )
+            order.created_at = order_date
+            order.save()
             
-    #         # Add order items
-    #         num_items = random.randint(1, 4)
-    #         selected_products = random.sample(products, min(num_items, len(products)))
+            # Add order items
+            num_items = random.randint(1, 4)
+            selected_products = random.sample(products, min(num_items, len(products)))
             
-    #         for product in selected_products:
-    #             quantity = Decimal(str(random.uniform(1, 10))).quantize(Decimal('0.01'))
-    #             width = Decimal(str(random.randint(80, 200)))  # Width in cm
-    #             height = Decimal(str(random.randint(100, 250)))  # Height in cm
+            for product in selected_products:
+                quantity = Decimal(str(random.uniform(1, 10))).quantize(Decimal('0.01'))
+                width = Decimal(str(random.randint(80, 200)))  # Width in cm
+                height = Decimal(str(random.randint(100, 250)))  # Height in cm
                 
-    #             OrderItem.objects.create(
-    #                 order=order,
-    #                 product=product,
-    #                 width=width,
-    #                 height=height,
-    #                 quantity=quantity,
-    #                 unit_price=product.selling_price,
-    #                 notes=random.choice(['', 'Découpe sur mesure', 'Installation incluse'])
-    #             )
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    width=width,
+                    height=height,
+                    quantity=quantity,
+                    unit_price=product.selling_price,
+                    notes=random.choice(['', 'Découpe sur mesure', 'Installation incluse'])
+                )
             
-    #         orders.append(order)
+            orders.append(order)
         
-    #     return orders
+        return orders
 
-    # def create_invoices(self, customers, products, orders, users):
-    #     """Create sample invoices"""
-    #     invoices = []
+    def create_invoices(self, customers, products, orders, users):
+        """Create sample invoices"""
+        invoices = []
         
-    #     # Create invoices from orders
-    #     for order in orders[:5]:
-    #         invoice_date = order.created_at.date() + timedelta(days=random.randint(1, 5))
-    #         due_date = invoice_date + timedelta(days=30)
+        # Create invoices from orders
+        for order in orders[:5]:
+            invoice_date = order.created_at.date() + timedelta(days=random.randint(1, 5))
+            due_date = invoice_date + timedelta(days=30)
             
-    #         invoice = Invoice.objects.create(
-    #             customer=order.customer,
-    #             order=order,
-    #             due_date=due_date,
-    #             payment_method=random.choice(['cash', 'card', 'transfer']),
-    #             delivery_address=order.delivery_address,
-    #             delivery_date=order.delivery_date,
-    #             installation_notes=random.choice([
-    #                 'Installation prévue le matin',
-    #                 'Équipe de 2 personnes',
-    #                 'Matériel spécialisé requis',
-    #                 ''
-    #             ]),
-    #             warranty_info='Garantie 2 ans sur le verre, 1 an sur l\'installation',
-    #             status=random.choice(['draft', 'sent', 'paid']),
-    #             notes=random.choice(['', 'Client VIP', 'Remise accordée']),
-    #             created_by=random.choice(users)
-    #         )
-    #         invoice.invoice_date = invoice_date
-    #         invoice.save()
+            invoice = Invoice.objects.create(
+                customer=order.customer,
+                order=order,
+                due_date=due_date,
+                payment_method=random.choice(['cash', 'card', 'transfer']),
+                delivery_address=order.delivery_address,
+                delivery_date=order.delivery_date,
+                installation_notes=random.choice([
+                    'Installation prévue le matin',
+                    'Équipe de 2 personnes',
+                    'Matériel spécialisé requis',
+                    ''
+                ]),
+                warranty_info='Garantie 2 ans sur le verre, 1 an sur l\'installation',
+                status=random.choice(['draft', 'sent', 'paid']),
+                notes=random.choice(['', 'Client VIP', 'Remise accordée']),
+                created_by=random.choice(users)
+            )
+            invoice.invoice_date = invoice_date
+            invoice.save()
             
-    #         # Add invoice items from order items
-    #         for order_item in order.orderitem_set.all():
-    #             InvoiceItem.objects.create(
-    #                 invoice=invoice,
-    #                 product=order_item.product,
-    #                 description=f"{order_item.product.name} - {order_item.product.thickness}mm",
-    #                 quantity=order_item.quantity,
-    #                 unit_price=order_item.unit_price,
-    #                 width=Decimal(str(random.randint(80, 200))),
-    #                 height=Decimal(str(random.randint(100, 250))),
-    #                 thickness=order_item.product.thickness + 'mm'
-    #             )
+            # Add invoice items from order items
+            for order_item in order.orderitem_set.all():
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=order_item.product,
+                    description=f"{order_item.product.name} - {order_item.product.thickness}mm",
+                    quantity=order_item.quantity,
+                    unit_price=order_item.unit_price,
+                    width=Decimal(str(random.randint(80, 200))),
+                    height=Decimal(str(random.randint(100, 250))),
+                    thickness=order_item.product.thickness + 'mm'
+                )
             
-    #         # Add services
-    #         if order.installation_required:
-    #             InvoiceService.objects.create(
-    #                 invoice=invoice,
-    #                 service_type='installation',
-    #                 description='Installation sur site',
-    #                 amount=Decimal('5000.00')
-    #             )
+            # Add services
+            if order.installation_required:
+                InvoiceService.objects.create(
+                    invoice=invoice,
+                    service_type='installation',
+                    description='Installation sur site',
+                    amount=Decimal('5000.00')
+                )
             
-    #         InvoiceService.objects.create(
-    #             invoice=invoice,
-    #             service_type='delivery',
-    #             description='Livraison',
-    #             amount=Decimal('2000.00')
-    #         )
+            InvoiceService.objects.create(
+                invoice=invoice,
+                service_type='delivery',
+                description='Livraison',
+                amount=Decimal('2000.00')
+            )
             
-    #         # Add random discount
-    #         if random.random() < 0.3:  # 30% chance of discount
-    #             invoice.discount_amount = Decimal(str(random.randint(500, 2000)))
-    #             invoice.save()
+            # Add random discount
+            if random.random() < 0.3:  # 30% chance of discount
+                invoice.discount_amount = Decimal(str(random.randint(500, 2000)))
+                invoice.save()
             
-    #         invoices.append(invoice)
+            invoices.append(invoice)
         
-    #     # Create standalone invoices
-    #     for i in range(3):
-    #         customer = random.choice(customers)
-    #         invoice_date = date.today() - timedelta(days=random.randint(1, 60))
-    #         due_date = invoice_date + timedelta(days=30)
+        # Create standalone invoices
+        for i in range(3):
+            customer = random.choice(customers)
+            invoice_date = date.today() - timedelta(days=random.randint(1, 60))
+            due_date = invoice_date + timedelta(days=30)
             
-    #         invoice = Invoice.objects.create(
-    #             customer=customer,
-    #             due_date=due_date,
-    #             payment_method=random.choice(['cash', 'card', 'cheque']),
-    #             delivery_address=customer.address,
-    #             warranty_info='Garantie standard 2 ans',
-    #             status=random.choice(['sent', 'paid', 'overdue']),
-    #             created_by=random.choice(users)
-    #         )
-    #         invoice.invoice_date = invoice_date
-    #         invoice.save()
+            invoice = Invoice.objects.create(
+                customer=customer,
+                due_date=due_date,
+                payment_method=random.choice(['cash', 'card', 'cheque']),
+                delivery_address=customer.address,
+                warranty_info='Garantie standard 2 ans',
+                status=random.choice(['sent', 'paid', 'overdue']),
+                created_by=random.choice(users)
+            )
+            invoice.invoice_date = invoice_date
+            invoice.save()
             
-    #         # Add invoice items
-    #         num_items = random.randint(1, 3)
-    #         selected_products = random.sample(products, min(num_items, len(products)))
+            # Add invoice items
+            num_items = random.randint(1, 3)
+            selected_products = random.sample(products, min(num_items, len(products)))
             
-    #         for product in selected_products:
-    #             quantity = Decimal(str(random.uniform(1, 8))).quantize(Decimal('0.01'))
-    #             InvoiceItem.objects.create(
-    #                 invoice=invoice,
-    #                 product=product,
-    #                 description=f"{product.name} sur mesure",
-    #                 quantity=quantity,
-    #                 unit_price=product.selling_price,
-    #                 width=Decimal(str(random.randint(60, 180))),
-    #                 height=Decimal(str(random.randint(80, 220))),
-    #                 thickness=product.thickness + 'mm'
-    #             )
+            for product in selected_products:
+                quantity = Decimal(str(random.uniform(1, 8))).quantize(Decimal('0.01'))
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=product,
+                    description=f"{product.name} sur mesure",
+                    quantity=quantity,
+                    unit_price=product.selling_price,
+                    width=Decimal(str(random.randint(60, 180))),
+                    height=Decimal(str(random.randint(80, 220))),
+                    thickness=product.thickness + 'mm'
+                )
             
-    #         invoices.append(invoice)
+            invoices.append(invoice)
         
-    #     return invoices
+        return invoices
 
-    # def create_payments(self, invoices):
-    #     """Create sample payments"""
-    #     payments = []
+    def create_payments(self, invoices):
+        """Create sample payments"""
+        payments = []
         
-    #     for invoice in invoices:
-    #         if invoice.status in ['paid', 'overdue']:
-    #             # Full payment
-    #             if random.random() < 0.7:  # 70% chance of full payment
-    #                 payment = Payment.objects.create(
-    #                     invoice=invoice,
-    #                     payment_date=invoice.invoice_date + timedelta(days=random.randint(1, 45)),
-    #                     amount=invoice.total_amount,
-    #                     payment_method=invoice.payment_method,
-    #                     reference=f"REF{random.randint(100000, 999999)}",
-    #                     status='completed',
-    #                     notes=random.choice(['', 'Paiement comptant', 'Virement reçu'])
-    #                 )
-    #                 payments.append(payment)
-    #             else:
-    #                 # Partial payments
-    #                 remaining = invoice.total_amount
-    #                 num_payments = random.randint(2, 3)
+        for invoice in invoices:
+            if invoice.status in ['paid', 'overdue']:
+                # Full payment
+                if random.random() < 0.7:  # 70% chance of full payment
+                    payment = Payment.objects.create(
+                        invoice=invoice,
+                        payment_date=invoice.invoice_date + timedelta(days=random.randint(1, 45)),
+                        amount=invoice.total_amount,
+                        payment_method=invoice.payment_method,
+                        reference=f"REF{random.randint(100000, 999999)}",
+                        status='completed',
+                        notes=random.choice(['', 'Paiement comptant', 'Virement reçu'])
+                    )
+                    payments.append(payment)
+                else:
+                    # Partial payments
+                    remaining = invoice.total_amount
+                    num_payments = random.randint(2, 3)
                     
-    #                 for i in range(num_payments):
-    #                     if i == num_payments - 1:
-    #                         # Last payment - remaining amount
-    #                         amount = remaining
-    #                     else:
-    #                         # Partial payment
-    #                         amount = remaining * Decimal(str(random.uniform(0.3, 0.6)))
-    #                         remaining -= amount
+                    for i in range(num_payments):
+                        if i == num_payments - 1:
+                            # Last payment - remaining amount
+                            amount = remaining
+                        else:
+                            # Partial payment
+                            amount = remaining * Decimal(str(random.uniform(0.3, 0.6)))
+                            remaining -= amount
                         
-    #                     payment = Payment.objects.create(
-    #                         invoice=invoice,
-    #                         payment_date=invoice.invoice_date + timedelta(days=random.randint(1, 60)),
-    #                         amount=amount,
-    #                         payment_method=random.choice(['cash', 'card', 'transfer']),
-    #                         reference=f"REF{random.randint(100000, 999999)}",
-    #                         status='completed',
-    #                         notes=f'Paiement partiel {i+1}/{num_payments}'
-    #                     )
-    #                     payments.append(payment)
+                        payment = Payment.objects.create(
+                            invoice=invoice,
+                            payment_date=invoice.invoice_date + timedelta(days=random.randint(1, 60)),
+                            amount=amount,
+                            payment_method=random.choice(['cash', 'card', 'transfer']),
+                            reference=f"REF{random.randint(100000, 999999)}",
+                            status='completed',
+                            notes=f'Paiement partiel {i+1}/{num_payments}'
+                        )
+                        payments.append(payment)
         
-    #     return payments
+        return payments
     
 """
 touch project/apps/{authentication,company,customers,dashboard,inventory,invoices,orders,suppliers}/admin.py

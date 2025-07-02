@@ -75,7 +75,7 @@ class Invoice(models.Model):
         return f"{prefix}{new_number:04d}"
     
     def calculate_totals(self):
-        
+        from decimal import Decimal
         
         # Calculate product subtotal
         self.subtotal = sum(item.subtotal for item in self.invoiceitem_set.all())
@@ -85,9 +85,9 @@ class Invoice(models.Model):
         
         # Calculate tax - default to 0 if no company or tax_rate not set
         company = Company.objects.first()
-        tax_rate = 0.00  # Default to 0
+        tax_rate = Decimal('0.00')  # Default to Decimal 0
         if company and company.tax_rate:
-            tax_rate = company.tax_rate
+            tax_rate = Decimal(str(company.tax_rate))  # Convert to Decimal
         
         taxable_amount = self.subtotal + self.services_total - self.discount_amount
         self.tax_amount = (taxable_amount * tax_rate) / 100

@@ -7,8 +7,10 @@ class InvoiceForm(forms.ModelForm):
     class Meta:
         model = Invoice
         fields = ['customer', 'due_date', 'payment_method', 'delivery_address', 'delivery_date', 
-                 'installation_notes', 'warranty_info', 'discount_amount', 'notes']
+                 'installation_notes', 'warranty_info', 'discount_amount', 'notes', 'status']
         widgets = {
+            # add the status widget
+            'status': forms.Select(attrs={'class': 'form-select'}),
             'customer': forms.Select(attrs={'class': 'form-select'}),
             'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'payment_method': forms.Select(attrs={'class': 'form-select'}),
