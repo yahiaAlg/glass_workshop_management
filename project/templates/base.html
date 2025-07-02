@@ -188,12 +188,15 @@
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' and request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
-                                <i class="fas fa-tachometer-alt me-2"></i>
-                                Tableau de Bord
-                            </a>
-                        </li>
+                        {% comment %} display only if the user role is admin {% endcomment %}
+                        {% if request.user.role == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' and request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>
+                                    Tableau de Bord
+                                </a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.namespace == 'customers' %}active{% endif %}" href="{% url 'customers:list' %}">
                                 <i class="fas fa-users me-2"></i>
@@ -218,26 +221,26 @@
                                 Factures
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.namespace == 'suppliers' %}active{% endif %}" href="{% url 'suppliers:list' %}">
-                                <i class="fas fa-truck me-2"></i>
-                                Fournisseurs
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' and 'reports' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:reports' %}">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                Rapports
-                            </a>
-                        </li>
-
-
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.namespace == 'audit' %}active{% endif %}" href="{% url 'audit:dashboard' %}">
-                                <i class="fas fa-calculator me-2"></i>
-                                Audit Financier
-                            </a>
-                        </li>
+                        {% if request.user.role == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'suppliers' %}active{% endif %}" href="{% url 'suppliers:list' %}">
+                                    <i class="fas fa-truck me-2"></i>
+                                    Fournisseurs
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'dashboard' and 'reports' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:reports' %}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Rapports
+                                </a>
+                            </li>                            
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.namespace == 'audit' %}active{% endif %}" href="{% url 'audit:dashboard' %}">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    Audit Financier
+                                </a>
+                            </li>
+                        {% endif %}
                     </ul>
                 </div>
             </nav>
