@@ -4,3 +4,4 @@ python-decouple
 reportlab
 django-import-export
 tablib
+xlsxwriter
