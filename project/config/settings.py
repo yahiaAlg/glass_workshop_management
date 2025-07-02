@@ -104,7 +104,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / os.path.join('config', 'static')]
+STATICFILES_DIRS = [BASE_DIR / os.path.join('','config', 'static')]
 STATIC_ROOT = BASE_DIR / 'static'
 
 # Media files
