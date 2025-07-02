@@ -232,7 +232,7 @@
                     </tr>
                     {% endif %}
                     <tr>
-                        <td>TVA (19%):</td>
+                        <td>TVA ({{tva_rate}}):</td>
                         <td class="text-end">{{ invoice.tax_amount|floatformat:2 }}DA</td>
                     </tr>
                     <tr class="border-top">

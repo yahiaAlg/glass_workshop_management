@@ -13,7 +13,8 @@ def company_profile(request):
             business_type="Commerce de verre et installation",
             address="Adresse à définir",
             phone="Téléphone à définir",
-            email="contact@example.com"
+            email="contact@example.com",
+            tax_rate=0.00  # Default to 0% if no company exists
         )
     
     if request.method == 'POST':
@@ -26,3 +27,4 @@ def company_profile(request):
         form = CompanyForm(instance=company)
     
     return render(request, 'company/profile.html', {'form': form, 'company': company})
+

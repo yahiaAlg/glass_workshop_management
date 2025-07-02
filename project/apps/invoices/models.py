@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from apps.customers.models import Customer
 from apps.inventory.models import GlassProduct
 from apps.orders.models import Order
-
+from apps.company.models import Company
 User = get_user_model()
 
 class Invoice(models.Model):
@@ -75,7 +75,7 @@ class Invoice(models.Model):
         return f"{prefix}{new_number:04d}"
     
     def calculate_totals(self):
-        from apps.company.models import Company
+        
         
         # Calculate product subtotal
         self.subtotal = sum(item.subtotal for item in self.invoiceitem_set.all())
@@ -83,9 +83,12 @@ class Invoice(models.Model):
         # Calculate services total
         self.services_total = sum(service.amount for service in self.invoiceservice_set.all())
         
-        # Calculate tax
+        # Calculate tax - default to 0 if no company or tax_rate not set
         company = Company.objects.first()
-        tax_rate = company.tax_rate if company else 19.00
+        tax_rate = 0.00  # Default to 0
+        if company and company.tax_rate:
+            tax_rate = company.tax_rate
+        
         taxable_amount = self.subtotal + self.services_total - self.discount_amount
         self.tax_amount = (taxable_amount * tax_rate) / 100
         

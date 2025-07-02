@@ -204,7 +204,7 @@
                                 <td class="text-end" id="discount">0.00DA</td>
                             </tr>
                             <tr>
-                                <td>TVA (19%):</td>
+                                <td>TVA (<span id="tax-rate-display">{{ tax_rate|default:0 }}</span>%):</td>
                                 <td class="text-end" id="tax">0.00DA</td>
                             </tr>
                             <tr class="border-top">
@@ -231,11 +231,15 @@
             </div>
         </div>
     </form>
-
+    {% comment %} hidden input for TVA rate {% endcomment %}
+    <input id="tva_rate" type="hidden" value="{{ tax_rate|default:0 }}"/>
     <script>
         let itemFormCount = {{ item_formset.total_form_count }};
         let serviceFormCount = {{ service_formset.total_form_count }};
         let productsData = {}; // Cache for products data
+        
+        // Get tax rate from Django context, default to 0 if not provided
+        const TAX_RATE =  parseFloat(document.querySelector("input[type='hidden']#tva_rate").value).toFixed(2)/ 100; // Convert percentage to decimal
         
         // Load products data on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -478,7 +482,7 @@
             const discountInput = document.querySelector('input[name="discount_amount"]');
             const discount = parseFloat(discountInput?.value || 0);
             const taxableAmount = subtotal + servicesTotal - discount;
-            const tax = taxableAmount * 0.19;
+            const tax = taxableAmount * TAX_RATE; // Use dynamic tax rate
             const total = taxableAmount + tax;
             
             // Update display

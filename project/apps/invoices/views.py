@@ -7,6 +7,7 @@ from django.db.models import Q
 from datetime import datetime
 
 from apps.orders.models import Order
+from apps.company.models import Company
 from .models import Invoice, InvoiceItem, InvoiceService
 from .forms import InvoiceForm, InvoiceItemForm, InvoiceServiceForm, PaymentForm
 
@@ -98,7 +99,8 @@ def invoice_list(request):
 def invoice_create(request):
     InvoiceItemFormSet = inlineformset_factory(Invoice, InvoiceItem, form=InvoiceItemForm, extra=1, can_delete=True)
     InvoiceServiceFormSet = inlineformset_factory(Invoice, InvoiceService, form=InvoiceServiceForm, extra=1, can_delete=True)
-    
+    company = Company.objects.first()
+    tax_rate = company.tax_rate if company and company.tax_rate else 0.00
     # Get order from query parameter for prepopulation
     order_id = request.GET.get('order_id')
     order = None
@@ -214,7 +216,8 @@ def invoice_create(request):
             service_formset = InvoiceServiceFormSet(prefix='services')
     
     return render(request, 'invoices/form.html', {
-        'form': form, 
+        'form': form,
+        'tax_rate': tax_rate,
         'item_formset': item_formset,
         'service_formset': service_formset,
         'title': 'Nouvelle Facture',
@@ -261,14 +264,15 @@ def invoice_detail(request, pk):
     items = invoice.invoiceitem_set.all()
     services = invoice.invoiceservice_set.all()
     payments = invoice.payment_set.all()
-    
+    tva_rate = Company.objects.first().tax_rate
     # Calculate total payments
     total_payments = sum(p.amount for p in payments.filter(status='completed'))
     remaining_amount = invoice.total_amount - total_payments
     
     return render(request, 'invoices/detail.html', {
         'invoice': invoice, 
-        'items': items, 
+        'items': items,
+        'tva_rate': tva_rate,
         'services': services,
         'payments': payments,
         'total_payments': total_payments,
@@ -278,10 +282,13 @@ def invoice_detail(request, pk):
 @login_required
 def invoice_print(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
+    tva_rate = Company.objects.first().tax_rate
+    
     items = invoice.invoiceitem_set.all()
     services = invoice.invoiceservice_set.all()
     return render(request, 'invoices/print.html', {
         'invoice': invoice, 
+        'tva_rate': tva_rate,
         'items': items, 
         'services': services
     })
