@@ -29,7 +29,7 @@ class WorkerAccessMiddleware(MiddlewareMixin):
                 '/customers/',
                 '/dashboard/',
                 '/auth/logout/',
-                '/admin/',  # Add if needed
+                # '/admin/',  # Add if needed
             ]
             
             # Check if current path starts with any allowed pattern
