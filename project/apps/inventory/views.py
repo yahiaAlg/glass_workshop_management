@@ -1,10 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import GlassProduct
-from .forms import GlassProductForm
+from .models import *
+from .forms import *
 
 @login_required
 def product_list(request):
@@ -98,9 +100,9 @@ def product_list(request):
         products = paginator.get_page(page_number)
     
     # Get choices for filter dropdowns
-    glass_types = GlassProduct.GLASS_TYPES
-    thickness_choices = GlassProduct.THICKNESS_CHOICES
-    unit_choices = GlassProduct.UNIT_CHOICES
+    glass_types = GlassType.objects.filter(is_active=True)
+    thickness_choices = GlassThickness.objects.filter(is_active=True)
+    unit_choices = Unit.objects.filter(is_active=True)
     
     # Get supplier name if filtering by supplier
     supplier_name = None
@@ -189,36 +191,25 @@ def low_stock_alert(request):
 
 
 
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from apps.inventory.models import GlassProduct
 
 @login_required
 def products_api(request):
     """API endpoint to return products data for AJAX requests"""
-    products = GlassProduct.objects.filter(status='active').values(
-        'id', 
-        'name', 
-        'selling_price', 
-        'thickness',
-        'unit',
-        'color',
-        'glass_type',
-        'finish'
+    products = GlassProduct.objects.filter(status='active').select_related(
+        'glass_type', 'thickness', 'unit', 'color', 'finish'
     )
     
-    # Convert queryset to list and format data
     products_list = []
     for product in products:
         products_list.append({
-            'id': product['id'],
-            'name': product['name'],
-            'selling_price': float(product['selling_price']),
-            'thickness': product['thickness'],
-            'unit': product['unit'],
-            'color': product['color'],
-            'glass_type': product['glass_type'],
-            'finish': product['finish']
+            'id': product.id,
+            'name': product.name,
+            'selling_price': float(product.selling_price),
+            'thickness': product.thickness.display_name,
+            'unit': product.unit.name,
+            'color': product.color.name,
+            'glass_type': product.glass_type.name,
+            'finish': product.finish.name
         })
     
     return JsonResponse(products_list, safe=False)

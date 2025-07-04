@@ -7,7 +7,7 @@ import random
 
 from apps.company.models import Company
 from apps.customers.models import Customer
-from apps.inventory.models import GlassProduct
+from apps.inventory.models import *
 from apps.suppliers.models import Supplier
 from apps.orders.models import Order, OrderItem
 from apps.invoices.models import Invoice, InvoiceItem, InvoiceService, Payment
@@ -40,8 +40,16 @@ class Command(BaseCommand):
         # Create suppliers
         suppliers = self.create_suppliers()
         
+        # Create glass attributes
+        glass_types = self.create_glass_types()
+        thicknesses = self.create_glass_thicknesses()
+        colors = self.create_glass_colors()
+        finishes = self.create_glass_finishes()
+        units = self.create_units()
+
         # Create glass products
-        products = self.create_glass_products(suppliers)
+        products = self.create_glass_products(suppliers, glass_types, thicknesses, colors, finishes, units)
+
         
         # Create customers
         customers = self.create_customers()
@@ -76,6 +84,11 @@ class Command(BaseCommand):
         OrderItem.objects.all().delete()
         Order.objects.all().delete()
         GlassProduct.objects.all().delete()
+        GlassType.objects.all().delete()
+        GlassThickness.objects.all().delete()
+        GlassColor.objects.all().delete()
+        GlassFinish.objects.all().delete()
+        Unit.objects.all().delete()
         Customer.objects.all().delete()
         Supplier.objects.all().delete()
         Company.objects.all().delete()
@@ -195,15 +208,141 @@ class Command(BaseCommand):
         
         return suppliers
 
-    def create_glass_products(self, suppliers):
+    def create_glass_types(self):
+        """Create glass types"""
+        glass_types_data = [
+            {'code': 'window', 'name': 'Verre de fenêtre'},
+            {'code': 'mirror', 'name': 'Miroir'},
+            {'code': 'tempered', 'name': 'Verre trempé'},
+            {'code': 'shower', 'name': 'Verre de douche'},
+            {'code': 'table', 'name': 'Verre de table'},
+            {'code': 'decorative', 'name': 'Verre décoratif'},
+            {'code': 'laminated', 'name': 'Verre feuilleté'},
+        ]
+        
+        glass_types = []
+        for data in glass_types_data:
+            glass_type, created = GlassType.objects.get_or_create(
+                code=data['code'],
+                defaults=data
+            )
+            glass_types.append(glass_type)
+        
+        return glass_types
+
+    def create_glass_thicknesses(self):
+        """Create glass thicknesses"""
+        thicknesses_data = [
+            {'value': '4', 'display_name': '4mm'},
+            {'value': '5', 'display_name': '5mm'},
+            {'value': '6', 'display_name': '6mm'},
+            {'value': '8', 'display_name': '8mm'},
+            {'value': '10', 'display_name': '10mm'},
+            {'value': '12', 'display_name': '12mm'},
+        ]
+        
+        thicknesses = []
+        for data in thicknesses_data:
+            thickness, created = GlassThickness.objects.get_or_create(
+                value=data['value'],
+                defaults=data
+            )
+            thicknesses.append(thickness)
+        
+        return thicknesses
+
+    def create_glass_colors(self):
+        """Create glass colors"""
+        colors_data = [
+            {'code': 'clear', 'name': 'Transparent'},
+            {'code': 'bronze', 'name': 'Bronze'},
+            {'code': 'grey', 'name': 'Gris'},
+            {'code': 'blue', 'name': 'Bleu'},
+            {'code': 'green', 'name': 'Vert'},
+        ]
+        
+        colors = []
+        for data in colors_data:
+            color, created = GlassColor.objects.get_or_create(
+                code=data['code'],
+                defaults=data
+            )
+            colors.append(color)
+        
+        return colors
+
+    def create_glass_finishes(self):
+        """Create glass finishes"""
+        finishes_data = [
+            {'code': 'polished', 'name': 'Poli'},
+            {'code': 'frosted', 'name': 'Dépoli'},
+            {'code': 'textured', 'name': 'Texturé'},
+            {'code': 'sandblasted', 'name': 'Sablé'},
+        ]
+        
+        finishes = []
+        for data in finishes_data:
+            finish, created = GlassFinish.objects.get_or_create(
+                code=data['code'],
+                defaults=data
+            )
+            finishes.append(finish)
+        
+        return finishes
+
+    def create_units(self):
+        """Create measurement units"""
+        units_data = [
+            {'code': 'm2', 'name': 'Mètre carré'},
+            {'code': 'piece', 'name': 'Pièce'},
+            {'code': 'ml', 'name': 'Mètre linéaire'},
+        ]
+        
+        units = []
+        for data in units_data:
+            unit, created = Unit.objects.get_or_create(
+                code=data['code'],
+                defaults=data
+            )
+            units.append(unit)
+        
+        return units
+
+    def create_glass_products(self, suppliers, glass_types, thicknesses, colors, finishes, units):
         """Create sample glass products"""
+        # Get specific objects by code/value
+        window_type = next(gt for gt in glass_types if gt.code == 'window')
+        mirror_type = next(gt for gt in glass_types if gt.code == 'mirror')
+        tempered_type = next(gt for gt in glass_types if gt.code == 'tempered')
+        shower_type = next(gt for gt in glass_types if gt.code == 'shower')
+        table_type = next(gt for gt in glass_types if gt.code == 'table')
+        decorative_type = next(gt for gt in glass_types if gt.code == 'decorative')
+        laminated_type = next(gt for gt in glass_types if gt.code == 'laminated')
+        
+        thickness_4mm = next(t for t in thicknesses if t.value == '4')
+        thickness_5mm = next(t for t in thicknesses if t.value == '5')
+        thickness_6mm = next(t for t in thicknesses if t.value == '6')
+        thickness_8mm = next(t for t in thicknesses if t.value == '8')
+        thickness_10mm = next(t for t in thicknesses if t.value == '10')
+        thickness_12mm = next(t for t in thicknesses if t.value == '12')
+        
+        clear_color = next(c for c in colors if c.code == 'clear')
+        bronze_color = next(c for c in colors if c.code == 'bronze')
+        
+        polished_finish = next(f for f in finishes if f.code == 'polished')
+        frosted_finish = next(f for f in finishes if f.code == 'frosted')
+        
+        m2_unit = next(u for u in units if u.code == 'm2')
+        piece_unit = next(u for u in units if u.code == 'piece')
+        
         products_data = [
             {
                 'name': 'Verre Clair Standard',
-                'glass_type': 'window',
-                'thickness': '4',
-                'color': 'clear',
-                'finish': 'polished',
+                'glass_type': window_type,
+                'thickness': thickness_4mm,
+                'color': clear_color,
+                'finish': polished_finish,
+                'unit': m2_unit,
                 'cost_price': Decimal('850.00'),
                 'selling_price': Decimal('1200.00'),
                 'stock_quantity': Decimal('50.00'),
@@ -211,10 +350,11 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Verre Clair Épais',
-                'glass_type': 'window',
-                'thickness': '6',
-                'color': 'clear',
-                'finish': 'polished',
+                'glass_type': window_type,
+                'thickness': thickness_6mm,
+                'color': clear_color,
+                'finish': polished_finish,
+                'unit': m2_unit,
                 'cost_price': Decimal('1200.00'),
                 'selling_price': Decimal('1650.00'),
                 'stock_quantity': Decimal('30.00'),
@@ -222,10 +362,11 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Miroir Argent',
-                'glass_type': 'mirror',
-                'thickness': '4',
-                'color': 'clear',
-                'finish': 'polished',
+                'glass_type': mirror_type,
+                'thickness': thickness_4mm,
+                'color': clear_color,
+                'finish': polished_finish,
+                'unit': m2_unit,
                 'cost_price': Decimal('1500.00'),
                 'selling_price': Decimal('2100.00'),
                 'stock_quantity': Decimal('25.00'),
@@ -233,10 +374,11 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Verre Trempé Sécurisé',
-                'glass_type': 'tempered',
-                'thickness': '8',
-                'color': 'clear',
-                'finish': 'polished',
+                'glass_type': tempered_type,
+                'thickness': thickness_8mm,
+                'color': clear_color,
+                'finish': polished_finish,
+                'unit': m2_unit,
                 'cost_price': Decimal('2800.00'),
                 'selling_price': Decimal('3800.00'),
                 'stock_quantity': Decimal('15.00'),
@@ -244,10 +386,11 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Verre Douche Dépoli',
-                'glass_type': 'shower',
-                'thickness': '6',
-                'color': 'clear',
-                'finish': 'frosted',
+                'glass_type': shower_type,
+                'thickness': thickness_6mm,
+                'color': clear_color,
+                'finish': frosted_finish,
+                'unit': m2_unit,
                 'cost_price': Decimal('1800.00'),
                 'selling_price': Decimal('2500.00'),
                 'stock_quantity': Decimal('20.00'),
@@ -255,11 +398,11 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Plateau de Table Épais',
-                'glass_type': 'table',
-                'thickness': '12',
-                'color': 'clear',
-                'finish': 'polished',
-                'unit': 'piece',
+                'glass_type': table_type,
+                'thickness': thickness_12mm,
+                'color': clear_color,
+                'finish': polished_finish,
+                'unit': piece_unit,
                 'cost_price': Decimal('4500.00'),
                 'selling_price': Decimal('6200.00'),
                 'stock_quantity': Decimal('8.00'),
@@ -267,10 +410,11 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Verre Décoratif Bronze',
-                'glass_type': 'decorative',
-                'thickness': '5',
-                'color': 'bronze',
-                'finish': 'polished',
+                'glass_type': decorative_type,
+                'thickness': thickness_5mm,
+                'color': bronze_color,
+                'finish': polished_finish,
+                'unit': m2_unit,
                 'cost_price': Decimal('1600.00'),
                 'selling_price': Decimal('2200.00'),
                 'stock_quantity': Decimal('12.00'),
@@ -278,10 +422,11 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Verre Feuilleté Sécurité',
-                'glass_type': 'laminated',
-                'thickness': '10',
-                'color': 'clear',
-                'finish': 'polished',
+                'glass_type': laminated_type,
+                'thickness': thickness_10mm,
+                'color': clear_color,
+                'finish': polished_finish,
+                'unit': m2_unit,
                 'cost_price': Decimal('3200.00'),
                 'selling_price': Decimal('4300.00'),
                 'stock_quantity': Decimal('10.00'),
@@ -451,12 +596,12 @@ class Command(BaseCommand):
                 InvoiceItem.objects.create(
                     invoice=invoice,
                     product=order_item.product,
-                    description=f"{order_item.product.name} - {order_item.product.thickness}mm",
+                    description=f"{order_item.product.name} - {order_item.product.thickness.display_name}",
                     quantity=order_item.quantity,
                     unit_price=order_item.unit_price,
                     width=Decimal(str(random.randint(80, 200))),
                     height=Decimal(str(random.randint(100, 250))),
-                    thickness=order_item.product.thickness + 'mm'
+                    thickness=order_item.product.thickness.display_name
                 )
             
             # Add services
@@ -514,7 +659,7 @@ class Command(BaseCommand):
                     unit_price=product.selling_price,
                     width=Decimal(str(random.randint(60, 180))),
                     height=Decimal(str(random.randint(80, 220))),
-                    thickness=product.thickness + 'mm'
+                    thickness=product.thickness.display_name
                 )
             
             invoices.append(invoice)
