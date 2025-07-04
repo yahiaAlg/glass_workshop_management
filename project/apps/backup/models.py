@@ -1,90 +1,70 @@
-# apps/backup/models.py
 from django.db import models
 from django.contrib.auth import get_user_model
+import os
 
 User = get_user_model()
 
-class BackupJob(models.Model):
-    JOB_TYPES = [
-        ('export', 'Export'),
-        ('import', 'Import'),
+class BackupRecord(models.Model):
+    BACKUP_TYPE_CHOICES = [
+        ('full', 'Sauvegarde Complète'),
+        ('partial', 'Sauvegarde Partielle'),
     ]
     
     STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('processing', 'En cours'),
-        ('completed', 'Terminé'),
-        ('failed', 'Échoué'),
+        ('completed', 'Terminée'),
+        ('failed', 'Échouée'),
     ]
     
-    FORMAT_CHOICES = [
-        ('json', 'JSON'),
-        ('excel', 'Excel'),
-        ('csv', 'CSV'),
-        ('xml', 'XML'),
-        ('sql', 'SQL'),
-    ]
-    
-    COMPRESSION_CHOICES = [
-        ('none', 'Aucune'),
-        ('zip', 'ZIP'),
-        ('gzip', 'GZIP'),
-    ]
-    
-    job_type = models.CharField(max_length=10, choices=JOB_TYPES, verbose_name="Type d'opération")
-    format = models.CharField(max_length=10, choices=FORMAT_CHOICES, verbose_name="Format")
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending', verbose_name="Statut")
-    
-    # Export options
-    compression = models.CharField(max_length=10, choices=COMPRESSION_CHOICES, default='zip', verbose_name="Compression")
-    include_media = models.BooleanField(default=False, verbose_name="Inclure les fichiers média")
-    description = models.TextField(blank=True, verbose_name="Description")
-    
-    # Data selection
-    include_customers = models.BooleanField(default=True, verbose_name="Inclure les clients")
-    include_products = models.BooleanField(default=True, verbose_name="Inclure les produits")
-    include_orders = models.BooleanField(default=True, verbose_name="Inclure les commandes")
-    include_invoices = models.BooleanField(default=True, verbose_name="Inclure les factures")
-    include_suppliers = models.BooleanField(default=True, verbose_name="Inclure les fournisseurs")
-    include_company = models.BooleanField(default=True, verbose_name="Inclure les infos entreprise")
-    include_audit = models.BooleanField(default=True, verbose_name="Inclure les données d'audit")
-    
-    # Date filters
-    date_from = models.DateField(null=True, blank=True, verbose_name="Date de début")
-    date_to = models.DateField(null=True, blank=True, verbose_name="Date de fin")
-    
-    # Files
-    export_file = models.FileField(upload_to='backups/exports/', blank=True, verbose_name="Fichier d'export")
-    import_file = models.FileField(upload_to='backups/imports/', blank=True, verbose_name="Fichier d'import")
-    
-    # Job info
-    total_records = models.IntegerField(default=0, verbose_name="Total d'enregistrements")
-    processed_records = models.IntegerField(default=0, verbose_name="Enregistrements traités")
-    error_count = models.IntegerField(default=0, verbose_name="Nombre d'erreurs")
-    log_messages = models.TextField(blank=True, verbose_name="Messages de log")
-    
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Créé par")
+    name = models.CharField(max_length=200, verbose_name="Nom de la sauvegarde")
+    backup_type = models.CharField(max_length=20, choices=BACKUP_TYPE_CHOICES, default='full')
+    file_path = models.CharField(max_length=500, blank=True, null=True)
+    file_size = models.PositiveIntegerField(null=True, blank=True, verbose_name="Taille (bytes)")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True, null=True)
     
     class Meta:
-        verbose_name = "Tâche de sauvegarde"
-        verbose_name_plural = "Tâches de sauvegarde"
         ordering = ['-created_at']
+        verbose_name = "Enregistrement de Sauvegarde"
+        verbose_name_plural = "Enregistrements de Sauvegarde"
     
     def __str__(self):
-        return f"{self.get_job_type_display()} {self.get_format_display()} - {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+        return f"{self.name} - {self.get_status_display()}"
     
-    def add_log(self, message):
-        """Add a log message"""
-        if self.log_messages:
-            self.log_messages += f"\n{message}"
-        else:
-            self.log_messages = message
-        self.save()
+    @property
+    def file_size_mb(self):
+        if self.file_size:
+            return round(self.file_size / (1024 * 1024), 2)
+        return 0
     
-    def get_progress_percentage(self):
-        """Calculate progress percentage"""
-        if self.total_records == 0:
-            return 0
-        return min(100, (self.processed_records / self.total_records) * 100)
+    @property
+    def file_exists(self):
+        if self.file_path:
+            return os.path.exists(self.file_path)
+        return False
+
+class RestoreRecord(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'En attente'),
+        ('processing', 'En cours'),
+        ('completed', 'Terminée'),
+        ('failed', 'Échouée'),
+    ]
+    
+    backup_record = models.ForeignKey(BackupRecord, on_delete=models.CASCADE, null=True, blank=True)
+    file_name = models.CharField(max_length=200)
+    restored_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    restored_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-restored_at']
+        verbose_name = "Enregistrement de Restauration"
+        verbose_name_plural = "Enregistrements de Restauration"
+    
+    def __str__(self):
+        return f"Restauration {self.file_name} - {self.get_status_display()}"

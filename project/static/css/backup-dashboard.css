@@ -1,0 +1,262 @@
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.main-header {
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+}
+
+.main-header h1 {
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.metric-card {
+    background: white;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.metric-card .card-body {
+    padding: 2rem 1.5rem;
+}
+
+.metric-card h3 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.metric-card p {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+    opacity: 0.8;
+}
+
+.metric-card.total {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.metric-card.success {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.metric-card.danger {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.metric-card.warning {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #2c3e50;
+}
+
+.section-card {
+    background: white;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+}
+
+.section-card .card-header {
+    background: white;
+    border-bottom: 1px solid #f1f3f4;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.section-card .card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.type-stats {
+    padding: 2rem;
+}
+
+.type-stat-item {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.type-stat-item i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.type-stat-item h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.type-stat-item p {
+    color: #6c757d;
+    font-weight: 500;
+    margin: 0;
+}
+
+.quick-actions {
+    padding: 2rem;
+}
+
+.quick-actions .btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.875rem 1.5rem;
+    border: 2px solid;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary {
+    color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.btn-outline-primary:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    transform: translateY(-1px);
+}
+
+.btn-outline-success {
+    color: #10b981;
+    border-color: #10b981;
+}
+
+.btn-outline-success:hover {
+    background: #10b981;
+    border-color: #10b981;
+    transform: translateY(-1px);
+}
+
+.btn-outline-info {
+    color: #06b6d4;
+    border-color: #06b6d4;
+}
+
+.btn-outline-info:hover {
+    background: #06b6d4;
+    border-color: #06b6d4;
+    transform: translateY(-1px);
+}
+
+.action-buttons {
+    gap: 0.75rem;
+}
+
+.action-buttons .btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+}
+
+.btn-primary {
+    background: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.btn-success {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h5 {
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #9ca3af;
+    margin-bottom: 2rem;
+}
+
+.table {
+    margin: 0;
+}
+
+.table thead th {
+    border-top: none;
+    border-bottom: 2px solid #f1f3f4;
+    font-weight: 600;
+    color: #374151;
+    padding: 1rem 1.5rem;
+}
+
+.table tbody td {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f9fafb;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #f3f4f6;
+}
+
+.progress-bar {
+    border-radius: 3px;
+}
+
+.container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 0 1rem;
+    }
+    
+    .main-header {
+        padding: 1rem;
+    }
+    
+    .metric-card .card-body {
+        padding: 1.5rem 1rem;
+    }
+}

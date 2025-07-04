@@ -1,18 +1,27 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Tableau de Bord - Sauvegarde{% endblock %}
+{% block title %}Sauvegarde - Dashboard{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-database me-2"></i>Sauvegarde & Restauration</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a href="{% url 'backup:export' %}" class="btn btn-primary">
-                <i class="fas fa-download me-1"></i>Exporter
-            </a>
-            <a href="{% url 'backup:import' %}" class="btn btn-success">
-                <i class="fas fa-upload me-1"></i>Importer
-            </a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-database me-2"></i>Tableau de Bord Sauvegarde</h1>
+    <div>
+        <a href="{% url 'backup:create' %}" class="btn btn-primary me-2">
+            <i class="fas fa-plus me-1"></i>Nouvelle Sauvegarde
+        </a>
+        <div class="btn-group">
+            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-upload me-1"></i>Restaurer
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'backup:restore' %}">
+                    <i class="fas fa-file-upload me-2"></i>Télécharger un fichier
+                </a></li>
+                <li><a class="dropdown-item" href="{% url 'backup:restore_from_backup' %}">
+                    <i class="fas fa-history me-2"></i>Depuis une sauvegarde
+                </a></li>
+            </ul>
         </div>
     </div>
 </div>
@@ -22,148 +31,174 @@
     <div class="col-md-3">
         <div class="card metric-card">
             <div class="card-body text-center">
-                <i class="fas fa-tasks fa-2x mb-3"></i>
-                <h3>{{ stats.total_jobs }}</h3>
-                <p class="mb-0">Total Tâches</p>
+                <i class="fas fa-archive fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ total_backups }}</h3>
+                <p class="mb-0">Total Sauvegardes</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card metric-card success">
             <div class="card-body text-center">
-                <i class="fas fa-check-circle fa-2x mb-3"></i>
-                <h3>{{ stats.completed_jobs }}</h3>
-                <p class="mb-0">Terminées</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card metric-card danger">
-            <div class="card-body text-center">
-                <i class="fas fa-times-circle fa-2x mb-3"></i>
-                <h3>{{ stats.failed_jobs }}</h3>
-                <p class="mb-0">Échouées</p>
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ successful_backups }}</h3>
+                <p class="mb-0">Réussies</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card metric-card warning">
             <div class="card-body text-center">
-                <i class="fas fa-hourglass-half fa-2x mb-3"></i>
-                <h3>{{ stats.processing_jobs }}</h3>
-                <p class="mb-0">En Cours</p>
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ recent_backups|length }}</h3>
+                <p class="mb-0">Récentes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card danger">
+            <div class="card-body text-center">
+                <i class="fas fa-redo fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ recent_restores|length }}</h3>
+                <p class="mb-0">Restaurations</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Job Type Statistics -->
-<div class="row mb-4">
+<div class="row">
+    <!-- Recent Backups -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Sauvegardes Récentes</h5>
+                <a href="{% url 'backup:list' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                {% if recent_backups %}
+                    <div class="list-group list-group-flush">
+                        {% for backup in recent_backups %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ backup.name }}</h6>
+                                <small class="text-muted">
+                                    {{ backup.created_at|date:"d/m/Y H:i" }} - 
+                                    {% if backup.file_size_mb %}{{ backup.file_size_mb }} MB{% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                {% if backup.status == 'completed' %}
+                                    <span class="badge badge-success rounded-pill">
+                                        <i class="fas fa-check me-1"></i>Terminée
+                                    </span>
+                                {% elif backup.status == 'processing' %}
+                                    <span class="badge bg-warning rounded-pill">
+                                        <i class="fas fa-spinner fa-spin me-1"></i>En cours
+                                    </span>
+                                {% elif backup.status == 'failed' %}
+                                    <span class="badge bg-danger rounded-pill">
+                                        <i class="fas fa-times me-1"></i>Échouée
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                        Aucune sauvegarde récente
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Restores -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Répartition par Type</h5>
+                <h5 class="mb-0"><i class="fas fa-undo me-2"></i>Restaurations Récentes</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_restores %}
+                    <div class="list-group list-group-flush">
+                        {% for restore in recent_restores %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ restore.file_name }}</h6>
+                                <small class="text-muted">
+                                    {{ restore.restored_at|date:"d/m/Y H:i" }}
+                                    {% if restore.backup_record %}
+                                        - {{ restore.backup_record.name }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                {% if restore.status == 'completed' %}
+                                    <span class="badge bg-success rounded-pill">
+                                        <i class="fas fa-check me-1"></i>Terminée
+                                    </span>
+                                {% elif restore.status == 'processing' %}
+                                    <span class="badge bg-warning rounded-pill">
+                                        <i class="fas fa-spinner fa-spin me-1"></i>En cours
+                                    </span>
+                                {% elif restore.status == 'failed' %}
+                                    <span class="badge bg-danger rounded-pill">
+                                        <i class="fas fa-times me-1"></i>Échouée
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-4">
+                        <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                        Aucune restauration récente
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions Rapides</h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-6">
-                        <div class="text-center">
-                            <h3 class="text-primary">{{ stats.export_jobs }}</h3>
-                            <p class="text-muted mb-0">Exportations</p>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{% url 'backup:create' %}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-plus fa-2x d-block mb-2"></i>
+                                Créer une Sauvegarde
+                            </a>
                         </div>
                     </div>
-                    <div class="col-6">
-                        <div class="text-center">
-                            <h3 class="text-success">{{ stats.import_jobs }}</h3>
-                            <p class="text-muted mb-0">Importations</p>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{% url 'backup:restore' %}" class="btn btn-outline-success btn-lg">
+                                <i class="fas fa-upload fa-2x d-block mb-2"></i>
+                                Restaurer un Fichier
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{% url 'backup:list' %}" class="btn btn-outline-info btn-lg">
+                                <i class="fas fa-list fa-2x d-block mb-2"></i>
+                                Gérer les Sauvegardes
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Actions Rapides</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{% url 'backup:export' %}" class="btn btn-outline-primary">
-                        <i class="fas fa-download me-2"></i>Nouvelle Exportation
-                    </a>
-                    <a href="{% url 'backup:import' %}" class="btn btn-outline-success">
-                        <i class="fas fa-upload me-2"></i>Nouvelle Importation
-                    </a>
-                    <a href="{% url 'backup:list' %}" class="btn btn-outline-info">
-                        <i class="fas fa-list me-2"></i>Voir Toutes les Tâches
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Jobs -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Tâches Récentes</h5>
-        <a href="{% url 'backup:list' %}" class="btn btn-sm btn-outline-primary">Voir Tout</a>
-    </div>
-    <div class="card-body">
-        {% if recent_jobs %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Type</th>
-                            <th>Format</th>
-                            <th>Statut</th>
-                            <th>Créé le</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for job in recent_jobs %}
-                        <tr>
-                            <td><strong>#{{ job.id }}</strong></td>
-                            <td>
-                                <span class="badge bg-{% if job.job_type == 'export' %}primary{% else %}success{% endif %}">
-                                    <i class="fas fa-{% if job.job_type == 'export' %}download{% else %}upload{% endif %} me-1"></i>
-                                    {{ job.get_job_type_display }}
-                                </span>
-                            </td>
-                            <td>{{ job.format|upper }}</td>
-                            <td>
-                                {% if job.status == 'completed' %}
-                                    <span class="badge bg-success">Terminée</span>
-                                {% elif job.status == 'failed' %}
-                                    <span class="badge bg-danger">Échouée</span>
-                                {% elif job.status == 'processing' %}
-                                    <span class="badge bg-warning">En Cours</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">{{ job.get_status_display }}</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ job.created_at|date:"d/m/Y H:i" }}</td>
-                            <td>
-                                <a href="{% url 'backup:detail' job.pk %}" class="btn btn-sm btn-outline-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="text-center text-muted py-4">
-                <i class="fas fa-database fa-3x mb-3"></i>
-                <p>Aucune tâche de sauvegarde pour le moment.</p>
-                <a href="{% url 'backup:export' %}" class="btn btn-primary">Créer une Exportation</a>
-            </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

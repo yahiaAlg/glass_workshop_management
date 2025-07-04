@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supprimer Sauvegarde - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .danger-zone {
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        border: 2px solid #f87171;
+        border-radius: 12px;
+        padding: 25px;
+        text-align: center;
+    }
+    
+    .backup-details {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin: 20px 0;
+    }
+    
+    .detail-row {
+        padding: 10px 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .delete-icon {
+        color: #dc2626;
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    
+    .confirmation-text {
+        background: #fef3c7;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #f59e0b;
+        margin: 20px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-trash-alt me-2"></i>
+        Supprimer Sauvegarde
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'backup:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la Liste
+        </a>
+    </div>
+</div>
+
+<!-- Danger Zone -->
+<div class="danger-zone">
+    <div class="delete-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3 class="text-danger fw-bold mb-3">Confirmation de Suppression</h3>
+    <p class="mb-3 fs-5">
+        Vous êtes sur le point de supprimer définitivement cette sauvegarde.
+    </p>
+    <p class="text-muted mb-0">
+        Cette action est <strong>irréversible</strong> et supprimera le fichier de sauvegarde du serveur.
+    </p>
+</div>
+
+<!-- Backup Details -->
+<div class="backup-details">
+    <h4 class="text-primary mb-3">
+        <i class="fas fa-database me-2"></i>
+        Détails de la Sauvegarde
+    </h4>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="detail-row">
+                <strong>Nom:</strong>
+                <span class="ms-2">{{ backup.name }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Type:</strong>
+                <span class="badge bg-{{ backup.backup_type|yesno:'primary,secondary' }} ms-2">
+                    {{ backup.get_backup_type_display }}
+                </span>
+            </div>
+            <div class="detail-row">
+                <strong>Statut:</strong>
+                <span class="badge bg-{{ backup.status|yesno:'success,danger,warning,info' }} ms-2">
+                    {{ backup.get_status_display }}
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="detail-row">
+                <strong>Taille:</strong>
+                <span class="ms-2">
+                    {% if backup.file_size_mb %}
+                        {{ backup.file_size_mb }} MB
+                    {% else %}
+                        Non disponible
+                    {% endif %}
+                </span>
+            </div>
+            <div class="detail-row">
+                <strong>Créée le:</strong>
+                <span class="ms-2">{{ backup.created_at|date:"d/m/Y à H:i" }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Créée par:</strong>
+                <span class="ms-2">{{ backup.created_by.get_full_name|default:backup.created_by.username }}</span>
+            </div>
+        </div>
+    </div>
+    
+    {% if backup.error_message %}
+        <div class="mt-3 p-3 bg-light border-start border-danger border-3">
+            <strong class="text-danger">Message d'erreur:</strong>
+            <p class="mb-0 mt-1 text-muted">{{ backup.error_message }}</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- File Status -->
+<div class="alert alert-{% if backup.file_exists %}info{% else %}warning{% endif %}">
+    <i class="fas fa-{% if backup.file_exists %}file-check{% else %}file-times{% endif %} me-2"></i>
+    <strong>Statut du fichier:</strong>
+    {% if backup.file_exists %}
+        Le fichier de sauvegarde existe sur le serveur et sera supprimé.
+    {% else %}
+        Le fichier de sauvegarde n'existe plus sur le serveur. Seul l'enregistrement sera supprimé.
+    {% endif %}
+</div>
+
+<!-- Confirmation -->
+<div class="confirmation-text">
+    <h5 class="text-warning-emphasis mb-2">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        Attention
+    </h5>
+    <p class="mb-2">
+        La suppression de cette sauvegarde entraînera:
+    </p>
+    <ul class="list-unstyled mb-0">
+        <li><i class="fas fa-times text-danger me-2"></i>Suppression définitive du fichier de sauvegarde</li>
+        <li><i class="fas fa-times text-danger me-2"></i>Suppression de l'enregistrement de la base de données</li>
+        <li><i class="fas fa-times text-danger me-2"></i>Impossibilité de récupérer ces données</li>
+    </ul>
+</div>
+
+<!-- Action Form -->
+<form method="post" class="mt-4">
+    {% csrf_token %}
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <a href="{% url 'backup:list' %}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>
+                Annuler
+            </a>
+            {% if backup.file_exists and backup.status == 'completed' %}
+                <a href="{% url 'backup:download' backup.id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-download me-2"></i>
+                    Télécharger avant suppression
+                </a>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-danger" onclick="return confirmDelete()">
+            <i class="fas fa-trash-alt me-2"></i>
+            Supprimer Définitivement
+        </button>
+    </div>
+</form>
+
+<!-- Warning Footer -->
+<div class="mt-4 p-3 bg-light border-start border-warning border-3">
+    <small class="text-muted">
+        <i class="fas fa-info-circle me-1"></i>
+        <strong>Conseil:</strong> Si cette sauvegarde contient des données importantes, 
+        téléchargez-la avant de la supprimer. Une fois supprimée, elle ne pourra plus être récupérée.
+    </small>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete() {
+    const backupName = "{{ backup.name|escapejs }}";
+    
+    return confirm(
+        `⚠️ CONFIRMATION DE SUPPRESSION ⚠️\n\n` +
+        `Êtes-vous certain de vouloir supprimer la sauvegarde "${backupName}" ?\n\n` +
+        `Cette action est IRRÉVERSIBLE et supprimera :\n` +
+        `• Le fichier de sauvegarde du serveur\n` +
+        `• L'enregistrement de la base de données\n\n` +
+        `Confirmez-vous la suppression ?`
+    );
+}
+
+// Add visual feedback on hover for delete button
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteBtn = document.querySelector('button[type="submit"]');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('mouseenter', function() {
+            this.classList.add('shadow-lg');
+        });
+        deleteBtn.addEventListener('mouseleave', function() {
+            this.classList.remove('shadow-lg');
+        });
+    }
+});
+</script>
+{% endblock %}

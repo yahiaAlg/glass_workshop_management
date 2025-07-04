@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Restaurer depuis Sauvegarde - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .warning-zone {
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        border: 2px solid #f87171;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .warning-icon {
+        color: #dc2626;
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .backup-info {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border-left: 4px solid var(--primary-color);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .form-section {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .section-title {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-history me-2"></i>
+        Restaurer depuis Sauvegarde
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'backup:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour au Tableau de Bord
+        </a>
+    </div>
+</div>
+
+<!-- Warning Section -->
+<div class="warning-zone text-center">
+    <div class="warning-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h4 class="text-danger fw-bold">⚠️ ATTENTION - OPÉRATION CRITIQUE ⚠️</h4>
+    <p class="mb-2 fw-semibold">
+        La restauration remplacera <strong>TOUTES</strong> les données actuelles de l'application.
+    </p>
+    <p class="mb-0 text-muted">
+        Assurez-vous d'avoir créé une sauvegarde récente avant de procéder.
+    </p>
+</div>
+
+<!-- Backup Selection Form -->
+<div class="form-section">
+    <h3 class="section-title">
+        <i class="fas fa-database me-2"></i>
+        Sélection de la Sauvegarde
+    </h3>
+    
+    <form method="post" id="restoreForm">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    <label for="{{ form.backup_record.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.backup_record.label }}
+                    </label>
+                    {{ form.backup_record }}
+                    {% if form.backup_record.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.backup_record.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Backup Info Display -->
+                <div id="backupInfo" class="backup-info d-none">
+                    <h5 class="text-primary mb-2">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informations sur la Sauvegarde
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Nom:</strong> <span id="backupName">-</span></p>
+                            <p class="mb-1"><strong>Type:</strong> <span id="backupType">-</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Taille:</strong> <span id="backupSize">-</span></p>
+                            <p class="mb-1"><strong>Créée le:</strong> <span id="backupDate">-</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Confirmation Checkbox -->
+                <div class="mt-4 p-3" style="background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <div class="form-check">
+                        {{ form.confirm_restore }}
+                        <label class="form-check-label fw-semibold text-warning-emphasis" for="{{ form.confirm_restore.id_for_label }}">
+                            {{ form.confirm_restore.label }}
+                        </label>
+                        <div class="form-text text-warning-emphasis">
+                            {{ form.confirm_restore.help_text }}
+                        </div>
+                        {% if form.confirm_restore.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.confirm_restore.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Conseils de Sécurité
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Créez une sauvegarde actuelle
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Vérifiez l'intégrité des données
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Informez les utilisateurs
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Planifiez en période creuse
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="mt-4 pt-3 border-top">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'backup:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>
+                    Annuler
+                </a>
+                <button type="submit" class="btn btn-danger" id="restoreBtn" disabled>
+                    <i class="fas fa-history me-2"></i>
+                    Lancer la Restauration
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Recent Backups List -->
+<div class="mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-clock me-2"></i>
+                Sauvegardes Disponibles
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if form.backup_record.field.queryset %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Type</th>
+                                <th>Taille</th>
+                                <th>Date de Création</th>
+                                <th>Créée par</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for backup in form.backup_record.field.queryset %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-database text-primary me-2"></i>
+                                        {{ backup.name }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ backup.backup_type|yesno:'primary,secondary' }}">
+                                            {{ backup.get_backup_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ backup.file_size_mb }} MB</td>
+                                    <td>{{ backup.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ backup.created_by.get_full_name|default:backup.created_by.username }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune sauvegarde disponible pour la restauration.</p>
+                    <a href="{% url 'backup:create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Créer une Sauvegarde
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const backupSelect = document.getElementById('{{ form.backup_record.id_for_label }}');
+    const confirmCheckbox = document.getElementById('{{ form.confirm_restore.id_for_label }}');
+    const restoreBtn = document.getElementById('restoreBtn');
+    const backupInfo = document.getElementById('backupInfo');
+    const form = document.getElementById('restoreForm');
+    
+    // Backup data for info display
+    const backupData = {
+        {% for backup in form.backup_record.field.queryset %}
+        '{{ backup.id }}': {
+            name: '{{ backup.name }}',
+            type: '{{ backup.get_backup_type_display }}',
+            size: '{{ backup.file_size_mb }} MB',
+            date: '{{ backup.created_at|date:"d/m/Y H:i" }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    function updateRestoreButton() {
+        const backupSelected = backupSelect.value !== '';
+        const confirmed = confirmCheckbox.checked;
+        restoreBtn.disabled = !(backupSelected && confirmed);
+    }
+    
+    function showBackupInfo(backupId) {
+        if (backupId && backupData[backupId]) {
+            const data = backupData[backupId];
+            document.getElementById('backupName').textContent = data.name;
+            document.getElementById('backupType').textContent = data.type;
+            document.getElementById('backupSize').textContent = data.size;
+            document.getElementById('backupDate').textContent = data.date;
+            backupInfo.classList.remove('d-none');
+        } else {
+            backupInfo.classList.add('d-none');
+        }
+    }
+    
+    backupSelect.addEventListener('change', function() {
+        updateRestoreButton();
+        showBackupInfo(this.value);
+    });
+    
+    confirmCheckbox.addEventListener('change', updateRestoreButton);
+    
+    // Form submission confirmation
+    form.addEventListener('submit', function(e) {
+        if (!confirm('⚠️ DERNIÈRE CONFIRMATION ⚠️\n\nÊtes-vous absolument certain de vouloir restaurer cette sauvegarde ?\n\nCette action est IRRÉVERSIBLE et remplacera toutes les données actuelles.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

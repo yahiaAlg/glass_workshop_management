@@ -1,5 +1,4 @@
 from django.db import models
-import uuid
 
 class GlassProduct(models.Model):
     GLASS_TYPES = [
