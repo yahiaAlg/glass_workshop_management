@@ -4,10 +4,10 @@
 {% block title %}Sauvegarde - Dashboard{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-database me-2"></i>Tableau de Bord Sauvegarde</h1>
-    <div>
-        <a href="{% url 'backup:create' %}" class="btn btn-primary me-2">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <h1 class="mb-0"><i class="fas fa-database me-2"></i>Tableau de Bord Sauvegarde</h1>
+    <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-md-auto">
+        <a href="{% url 'backup:create' %}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i>Nouvelle Sauvegarde
         </a>
         <div class="btn-group">
@@ -27,136 +27,138 @@
 </div>
 
 <!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card metric-card">
-            <div class="card-body text-center">
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body text-center p-3">
                 <i class="fas fa-archive fa-2x mb-2"></i>
-                <h3 class="mb-0">{{ total_backups }}</h3>
-                <p class="mb-0">Total Sauvegardes</p>
+                <h3 class="mb-1 fs-4">{{ total_backups }}</h3>
+                <p class="mb-0 small">Total Sauvegardes</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card metric-card success">
-            <div class="card-body text-center">
+    <div class="col-6 col-md-3">
+        <div class="card metric-card success h-100">
+            <div class="card-body text-center p-3">
                 <i class="fas fa-check-circle fa-2x mb-2"></i>
-                <h3 class="mb-0">{{ successful_backups }}</h3>
-                <p class="mb-0">Réussies</p>
+                <h3 class="mb-1 fs-4">{{ successful_backups }}</h3>
+                <p class="mb-0 small">Réussies</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card metric-card warning">
-            <div class="card-body text-center">
+    <div class="col-6 col-md-3">
+        <div class="card metric-card warning h-100">
+            <div class="card-body text-center p-3">
                 <i class="fas fa-clock fa-2x mb-2"></i>
-                <h3 class="mb-0">{{ recent_backups|length }}</h3>
-                <p class="mb-0">Récentes</p>
+                <h3 class="mb-1 fs-4">{{ recent_backups|length }}</h3>
+                <p class="mb-0 small">Récentes</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card metric-card danger">
-            <div class="card-body text-center">
+    <div class="col-6 col-md-3">
+        <div class="card metric-card danger h-100">
+            <div class="card-body text-center p-3">
                 <i class="fas fa-redo fa-2x mb-2"></i>
-                <h3 class="mb-0">{{ recent_restores|length }}</h3>
-                <p class="mb-0">Restaurations</p>
+                <h3 class="mb-1 fs-4">{{ recent_restores|length }}</h3>
+                <p class="mb-0 small">Restaurations</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
+<div class="row g-4">
     <!-- Recent Backups -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="col-12 col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
                 <h5 class="mb-0"><i class="fas fa-history me-2"></i>Sauvegardes Récentes</h5>
                 <a href="{% url 'backup:list' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_backups %}
                     <div class="list-group list-group-flush">
                         {% for backup in recent_backups %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{{ backup.name }}</h6>
-                                <small class="text-muted">
-                                    {{ backup.created_at|date:"d/m/Y H:i" }} - 
-                                    {% if backup.file_size_mb %}{{ backup.file_size_mb }} MB{% endif %}
-                                </small>
-                            </div>
-                            <div>
-                                {% if backup.status == 'completed' %}
-                                    <span class="badge badge-success rounded-pill">
-                                        <i class="fas fa-check me-1"></i>Terminée
-                                    </span>
-                                {% elif backup.status == 'processing' %}
-                                    <span class="badge bg-warning rounded-pill">
-                                        <i class="fas fa-spinner fa-spin me-1"></i>En cours
-                                    </span>
-                                {% elif backup.status == 'failed' %}
-                                    <span class="badge bg-danger rounded-pill">
-                                        <i class="fas fa-times me-1"></i>Échouée
-                                    </span>
-                                {% endif %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1 me-2">
+                                    <h6 class="mb-1 text-truncate">{{ backup.name }}</h6>
+                                    <small class="text-muted d-block">
+                                        {{ backup.created_at|date:"d/m/Y H:i" }}
+                                        {% if backup.file_size_mb %} - {{ backup.file_size_mb }} MB{% endif %}
+                                    </small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    {% if backup.status == 'completed' %}
+                                        <span class="badge bg-success rounded-pill">
+                                            <i class="fas fa-check me-1"></i>Terminée
+                                        </span>
+                                    {% elif backup.status == 'processing' %}
+                                        <span class="badge bg-warning rounded-pill">
+                                            <i class="fas fa-spinner fa-spin me-1"></i>En cours
+                                        </span>
+                                    {% elif backup.status == 'failed' %}
+                                        <span class="badge bg-danger rounded-pill">
+                                            <i class="fas fa-times me-1"></i>Échouée
+                                        </span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted text-center py-4">
+                    <div class="text-muted text-center py-5">
                         <i class="fas fa-inbox fa-2x d-block mb-2"></i>
-                        Aucune sauvegarde récente
-                    </p>
+                        <p class="mb-0">Aucune sauvegarde récente</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Recent Restores -->
-    <div class="col-md-6">
-        <div class="card">
+    <div class="col-12 col-lg-6">
+        <div class="card h-100">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-undo me-2"></i>Restaurations Récentes</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if recent_restores %}
                     <div class="list-group list-group-flush">
                         {% for restore in recent_restores %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{{ restore.file_name }}</h6>
-                                <small class="text-muted">
-                                    {{ restore.restored_at|date:"d/m/Y H:i" }}
-                                    {% if restore.backup_record %}
-                                        - {{ restore.backup_record.name }}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1 me-2">
+                                    <h6 class="mb-1 text-truncate" title="{{ restore.file_name }}">{{ restore.file_name }}</h6>
+                                    <small class="text-muted d-block">
+                                        {{ restore.restored_at|date:"d/m/Y H:i" }}
+                                        {% if restore.backup_record %} - {{ restore.backup_record.name }}{% endif %}
+                                    </small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    {% if restore.status == 'completed' %}
+                                        <span class="badge bg-success rounded-pill">
+                                            <i class="fas fa-check me-1"></i>Terminée
+                                        </span>
+                                    {% elif restore.status == 'processing' %}
+                                        <span class="badge bg-warning rounded-pill">
+                                            <i class="fas fa-spinner fa-spin me-1"></i>En cours
+                                        </span>
+                                    {% elif restore.status == 'failed' %}
+                                        <span class="badge bg-danger rounded-pill">
+                                            <i class="fas fa-times me-1"></i>Échouée
+                                        </span>
                                     {% endif %}
-                                </small>
-                            </div>
-                            <div>
-                                {% if restore.status == 'completed' %}
-                                    <span class="badge bg-success rounded-pill">
-                                        <i class="fas fa-check me-1"></i>Terminée
-                                    </span>
-                                {% elif restore.status == 'processing' %}
-                                    <span class="badge bg-warning rounded-pill">
-                                        <i class="fas fa-spinner fa-spin me-1"></i>En cours
-                                    </span>
-                                {% elif restore.status == 'failed' %}
-                                    <span class="badge bg-danger rounded-pill">
-                                        <i class="fas fa-times me-1"></i>Échouée
-                                    </span>
-                                {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted text-center py-4">
+                    <div class="text-muted text-center py-5">
                         <i class="fas fa-inbox fa-2x d-block mb-2"></i>
-                        Aucune restauration récente
-                    </p>
+                        <p class="mb-0">Aucune restauration récente</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -171,26 +173,26 @@
                 <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions Rapides</h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
                         <div class="d-grid">
-                            <a href="{% url 'backup:create' %}" class="btn btn-outline-primary btn-lg">
+                            <a href="{% url 'backup:create' %}" class="btn btn-outline-primary btn-lg py-3">
                                 <i class="fas fa-plus fa-2x d-block mb-2"></i>
                                 Créer une Sauvegarde
                             </a>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <div class="d-grid">
-                            <a href="{% url 'backup:restore' %}" class="btn btn-outline-success btn-lg">
+                            <a href="{% url 'backup:restore' %}" class="btn btn-outline-success btn-lg py-3">
                                 <i class="fas fa-upload fa-2x d-block mb-2"></i>
                                 Restaurer un Fichier
                             </a>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <div class="d-grid">
-                            <a href="{% url 'backup:list' %}" class="btn btn-outline-info btn-lg">
+                            <a href="{% url 'backup:list' %}" class="btn btn-outline-info btn-lg py-3">
                                 <i class="fas fa-list fa-2x d-block mb-2"></i>
                                 Gérer les Sauvegardes
                             </a>

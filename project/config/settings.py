@@ -47,6 +47,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # local middleware
+    'apps.common.middleware.WorkerAccessMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

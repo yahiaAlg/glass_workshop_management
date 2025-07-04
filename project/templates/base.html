@@ -37,9 +37,9 @@
                         {{ user.get_full_name|default:user.username }}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{% url 'company:profile' %}"><i class="fas fa-building me-2"></i>Profil Entreprise</a></li>
                         {% if user.is_admin %}
-                        <li><a class="dropdown-item" href="{% url 'authentication:create_user' %}"><i class="fas fa-user-plus me-2"></i>Nouvel Utilisateur</a></li>
+                            <li><a class="dropdown-item" href="{% url 'company:profile' %}"><i class="fas fa-building me-2"></i>Profil Entreprise</a></li>
+                            <li><a class="dropdown-item" href="{% url 'authentication:create_user' %}"><i class="fas fa-user-plus me-2"></i>Nouvel Utilisateur</a></li>
                         {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'authentication:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
