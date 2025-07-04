@@ -188,10 +188,6 @@ def low_stock_alert(request):
     low_stock_products = [p for p in GlassProduct.objects.filter(status='active') if p.is_low_stock()]
     return render(request, 'inventory/low_stock.html', {'products': low_stock_products})
 
-
-
-
-
 @login_required
 def products_api(request):
     """API endpoint to return products data for AJAX requests"""
