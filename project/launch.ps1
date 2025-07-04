@@ -206,12 +206,9 @@ function Populate-SampleData {
     
     # Populate in order of dependencies
     $Commands = @(
-        "populate_glass_categories",
-        "populate_glass_products", 
-        "populate_customers",
-        "populate_suppliers",
-        "populate_sample_orders",
-        "populate_sample_invoices"
+        "populate_categories",
+        "populate_sample_data"
+
     )
     
     foreach ($cmd in $Commands) {
