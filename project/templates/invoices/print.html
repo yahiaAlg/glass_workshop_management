@@ -229,11 +229,18 @@
                         <a href="mailto:{{company.email}}">Email: {{company.email}}</a><br>
                     </div>
                 </div>
-                <div class="logo-container d-flex justify-content-center align-items-center">
-                    <div class="logo">
-                        <img src="{% if not company.logo.url %}{% else %}{{ company.logo.url }}{% endif %}" alt="{% if not company.logo.url %}no logo provided{% endif %}" class="img-fluid" style="width: 150px; height: 100px;">
+                {% if company.logo and company.logo.url %}
+                    <div class="logo-container d-flex justify-content-center align-items-center">
+                        <div class="logo">
+                            <img src="{{ company.logo.url }}" alt="Company Logo" class="img-fluid" style="width: 150px; height: 100px;">
+                        </div>
                     </div>
-                </div>
+                {% else %}
+                    <div class="logo-container d-flex justify-content-center align-items-center">
+                        <div>No logo provided</div>
+                    </div>
+                {% endif %}
+
                 <div>
                     <div class="invoice-title">FACTURE</div>
                     <div class="invoice-details-table">
@@ -396,7 +403,9 @@
             <p><strong>Merci pour votre confiance !</strong></p>
             <p>Paiement dû dans les 14 jours. Mode de paiement: {{ invoice.get_payment_method_display }}</p>
             <hr style="margin: 10px 0;">
-            <p>GlassWorks Pro | RC: 123456789 | NIF: 987654321</p>
+            {% if company.nif and company.rc %}
+                <p>{{company.name}} | RC: {{company.rc}} | NIF: {{company.nif}}</p>
+            {% endif %}
         </div>
     </div>
     
