@@ -1,7 +1,50 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
-from .models import GlassProduct
-from .resources import GlassProductResource
+from .models import GlassProduct, GlassType, GlassThickness, GlassColor, GlassFinish, Unit
+from .resources import (
+    GlassProductResource, GlassTypeResource, GlassThicknessResource, 
+    GlassColorResource, GlassFinishResource, UnitResource
+)
+
+@admin.register(GlassType)
+class GlassTypeAdmin(ImportExportModelAdmin):
+    resource_class = GlassTypeResource
+    list_display = ('code', 'name', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('code', 'name')
+    list_editable = ('is_active',)
+
+@admin.register(GlassThickness)
+class GlassThicknessAdmin(ImportExportModelAdmin):
+    resource_class = GlassThicknessResource
+    list_display = ('value', 'display_name', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('value', 'display_name')
+    list_editable = ('is_active',)
+
+@admin.register(GlassColor)
+class GlassColorAdmin(ImportExportModelAdmin):
+    resource_class = GlassColorResource
+    list_display = ('code', 'name', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('code', 'name')
+    list_editable = ('is_active',)
+
+@admin.register(GlassFinish)
+class GlassFinishAdmin(ImportExportModelAdmin):
+    resource_class = GlassFinishResource
+    list_display = ('code', 'name', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('code', 'name')
+    list_editable = ('is_active',)
+
+@admin.register(Unit)
+class UnitAdmin(ImportExportModelAdmin):
+    resource_class = UnitResource
+    list_display = ('code', 'name', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('code', 'name')
+    list_editable = ('is_active',)
 
 @admin.register(GlassProduct)
 class GlassProductAdmin(ImportExportModelAdmin):
@@ -30,6 +73,20 @@ class GlassProductAdmin(ImportExportModelAdmin):
             'classes': ('collapse',)
         })
     )
+    
+    # Add custom queryset method to only show active choices
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'glass_type':
+            kwargs['queryset'] = GlassType.objects.filter(is_active=True)
+        elif db_field.name == 'thickness':
+            kwargs['queryset'] = GlassThickness.objects.filter(is_active=True)
+        elif db_field.name == 'color':
+            kwargs['queryset'] = GlassColor.objects.filter(is_active=True)
+        elif db_field.name == 'finish':
+            kwargs['queryset'] = GlassFinish.objects.filter(is_active=True)
+        elif db_field.name == 'unit':
+            kwargs['queryset'] = Unit.objects.filter(is_active=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
     actions = ['mark_as_active', 'mark_as_inactive', 'check_low_stock']
     
