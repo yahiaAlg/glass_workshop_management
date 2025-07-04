@@ -3,10 +3,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.utils import timezone
 from datetime import datetime, timedelta
-from apps.invoices.models import Invoice
-from apps.customers.models import Customer
-from apps.orders.models import Order
-from apps.inventory.models import GlassProduct
+
 
 from django.http import HttpResponse, JsonResponse
 from django.db.models import Sum, Count, Avg, F, Max, Min
@@ -22,7 +19,7 @@ import xlsxwriter
 
 from apps.invoices.models import Invoice, InvoiceItem
 from apps.customers.models import Customer
-from apps.inventory.models import GlassProduct
+from apps.inventory.models import *
 from apps.orders.models import Order
 from apps.company.models import Company
 
@@ -44,9 +41,16 @@ def dashboard_home(request):
     
     total_customers = Customer.objects.filter(status='active').count()
     
-    # Low stock products
-    low_stock_products = [p for p in GlassProduct.objects.filter(status='active') if p.is_low_stock()]
-    low_stock_count = len(low_stock_products)
+    # Low stock products - Fixed to use select_related
+    low_stock_products = GlassProduct.objects.filter(
+        status='active',
+        stock_quantity__lte=F('minimum_stock')
+    ).select_related('glass_type', 'thickness', 'color')[:5]
+    
+    low_stock_count = GlassProduct.objects.filter(
+        status='active',
+        stock_quantity__lte=F('minimum_stock')
+    ).count()
     
     pending_orders = Order.objects.filter(status='pending').count()
     outstanding_invoices = Invoice.objects.filter(status__in=['sent', 'overdue']).count()
@@ -67,10 +71,9 @@ def dashboard_home(request):
         sales_data.insert(0, float(sales))
         labels.insert(0, date.strftime('%d/%m'))
     
-    # Top products this month
-    from django.db.models import Q
+    # Top products this month - Fixed to use select_related
     top_products_data = []
-    for product in GlassProduct.objects.filter(status='active')[:5]:
+    for product in GlassProduct.objects.filter(status='active').select_related('glass_type')[:5]:
         quantity_sold = Invoice.objects.filter(
             invoice_date__gte=this_month,
             status__in=['sent', 'paid'],
@@ -103,7 +106,7 @@ def dashboard_home(request):
         'month_revenue': month_revenue,
         'total_customers': total_customers,
         'low_stock_count': low_stock_count,
-        'low_stock_products': low_stock_products[:5],
+        'low_stock_products': low_stock_products,
         'pending_orders': pending_orders,
         'outstanding_invoices': outstanding_invoices,
         'recent_invoices': recent_invoices,
@@ -121,7 +124,6 @@ def dashboard_home(request):
     }
     
     return render(request, 'dashboard/home.html', context)
-
 
 
 @login_required
@@ -239,7 +241,9 @@ def sales_reports(request):
 def inventory_reports(request):
     """Inventory analytics and reports"""
     # Stock levels
-    products = GlassProduct.objects.filter(status='active')
+    products = GlassProduct.objects.filter(status='active').select_related(
+        'glass_type', 'thickness', 'color', 'finish'
+    )
     
     # Low stock products
     low_stock_products = products.filter(
@@ -268,8 +272,8 @@ def inventory_reports(request):
         revenue=Sum('subtotal')
     ).order_by('-sold_quantity')
     
-    # Stock by category
-    stock_by_category = products.values('glass_type').annotate(
+    # Stock by category - Fixed to use glass_type relationship
+    stock_by_category = products.values('glass_type__name').annotate(
         total_quantity=Sum('stock_quantity'),
         total_value=Sum(F('stock_quantity') * F('selling_price')),
         product_count=Count('id')
@@ -294,7 +298,6 @@ def inventory_reports(request):
     }
     
     return render(request, 'dashboard/reports/inventory_reports.html', context)
-
 
 @login_required
 def financial_reports(request):
@@ -742,7 +745,9 @@ def export_inventory_excel(request):
     for col, header in enumerate(headers):
         inventory_sheet.write(0, col, header, header_format)
     
-    products = GlassProduct.objects.filter(status='active').order_by('name')
+    products = GlassProduct.objects.filter(status='active').select_related(
+        'glass_type', 'thickness', 'color', 'finish'
+    ).order_by('name')
     
     for row, product in enumerate(products, 1):
         # Apply alert format for low stock
@@ -750,9 +755,9 @@ def export_inventory_excel(request):
         
         inventory_sheet.write(row, 0, product.code, row_format)
         inventory_sheet.write(row, 1, product.name, row_format)
-        inventory_sheet.write(row, 2, product.get_glass_type_display(), row_format)
-        inventory_sheet.write(row, 3, f"{product.thickness}mm", row_format)
-        inventory_sheet.write(row, 4, product.get_color_display(), row_format)
+        inventory_sheet.write(row, 2, product.glass_type.name, row_format)
+        inventory_sheet.write(row, 3, product.thickness.display_name, row_format)
+        inventory_sheet.write(row, 4, product.color.name, row_format)
         inventory_sheet.write(row, 5, float(product.stock_quantity), row_format)
         inventory_sheet.write(row, 6, float(product.minimum_stock), row_format)
         inventory_sheet.write(row, 7, float(product.cost_price), currency_format)
