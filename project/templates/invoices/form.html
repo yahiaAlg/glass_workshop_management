@@ -402,7 +402,7 @@
                 
                 // Auto-fill product details
                 priceInput.value = product.selling_price;
-                thicknessInput.value = product.thickness + 'mm';
+                thicknessInput.value = product.thickness;
                 
                 // Build description with product details
                 let description = product.name;
@@ -424,7 +424,7 @@
                     };
                     description += ` ${finishLabels[product.finish] || product.finish}`;
                 }
-                description += ` - ${product.thickness}mm`;
+                description += ` - ${product.thickness}`;
                 
                 descriptionInput.value = description;
                 

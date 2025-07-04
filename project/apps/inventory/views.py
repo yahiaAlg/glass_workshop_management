@@ -201,11 +201,11 @@ def products_api(request):
             'id': product.id,
             'name': product.name,
             'selling_price': float(product.selling_price),
-            'thickness': product.thickness.display_name,
-            'unit': product.unit.name,
-            'color': product.color.name,
-            'glass_type': product.glass_type.name,
-            'finish': product.finish.name
+            'thickness': product.thickness.display_name if product.thickness else 'N/A',
+            'unit': product.unit.name  if product.unit else 'N/A',
+            'color': product.color.name if product.color else 'N/A',
+            'glass_type': product.glass_type.name if product.glass_type else 'N/A',
+            'finish': product.finish.name if product.finish else 'N/A',
         })
     
     return JsonResponse(products_list, safe=False)

@@ -185,7 +185,7 @@ def invoice_create(request):
                     'unit_price': order_item.unit_price,
                     'width': order_item.width,
                     'height': order_item.height,
-                    'thickness': getattr(order_item.product, 'thickness', ''),
+                    'thickness': order_item.product.thickness.display_name if order_item.product.thickness else '',
                 })
             
             item_formset = InvoiceItemFormSet(prefix='items', initial=item_initial_data)
@@ -203,10 +203,10 @@ def invoice_create(request):
         elif product:
             item_initial_data = [{
                 'product': product,
-                'description': f"{product.name} - {product.get_thickness_display()} {product.get_color_display()}",
+                'description': f"{product.name} - {product.thickness.display_name if product.thickness else ''} {product.color.name if product.color else ''}",
                 'quantity': 1,
                 'unit_price': product.selling_price,
-                'thickness': product.thickness,
+                'thickness': product.thickness.display_name if product.thickness else '',
             }]
             
             item_formset = InvoiceItemFormSet(prefix='items', initial=item_initial_data)
@@ -225,7 +225,6 @@ def invoice_create(request):
         'customer': customer,  # Pass customer to template for reference
         'product': product,  # Pass product to template for reference
     })
-    
         
 @login_required
 def invoice_edit(request, pk):

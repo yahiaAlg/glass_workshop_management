@@ -756,7 +756,7 @@ def export_inventory_excel(request):
         inventory_sheet.write(row, 0, product.code, row_format)
         inventory_sheet.write(row, 1, product.name, row_format)
         inventory_sheet.write(row, 2, product.glass_type.name, row_format)
-        inventory_sheet.write(row, 3, product.thickness.display_name, row_format)
+        inventory_sheet.write(row, 3, product.thickness.display_name if product.thickness else 'N/A', row_format)
         inventory_sheet.write(row, 4, product.color.name, row_format)
         inventory_sheet.write(row, 5, float(product.stock_quantity), row_format)
         inventory_sheet.write(row, 6, float(product.minimum_stock), row_format)

@@ -101,7 +101,9 @@ class GlassProduct(models.Model):
         ordering = ['name']
     
     def __str__(self):
-        return f"{self.name} - {self.thickness.display_name}"
+        if self.thickness:
+            return f"{self.name} - {self.thickness.display_name}"
+        return self.name
     
     def save(self, *args, **kwargs):
         if not self.code:

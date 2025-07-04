@@ -225,13 +225,13 @@
                     <div class="company-details">
                         {{company.address}}<br>
                         {{company.business_type}}<br>
-                        Tél: {{company.phone}}<br>
-                        Email: {{company.email}}
+                        <a href="tel:{{company.phone}}">Tél: {{company.phone}}</a><br>
+                        <a href="mailto:{{company.email}}">Email: {{company.email}}</a><br>
                     </div>
                 </div>
                 <div class="logo-container d-flex justify-content-center align-items-center">
                     <div class="logo">
-                        <img src="{{ company.logo.url }}" alt="Company Logo" class="img-fluid" style="width: 150px; height: 100px;">
+                        <img src="{% if not company.logo.url %}{% else %}{{ company.logo.url }}{% endif %}" alt="{% if not company.logo.url %}no logo provided{% endif %}" class="img-fluid" style="width: 150px; height: 100px;">
                     </div>
                 </div>
                 <div>
@@ -288,14 +288,14 @@
                 <tr>
                     <th style="width: 15%;">Article</th>
                     {% comment %} <th style="width: 20%;">Description</th> {% endcomment %}
-                    <th style="width: 8%;">Largeur<br>(cm)</th>
-                    <th style="width: 8%;">Hauteur<br>(cm)</th>
+                    <th style="width: 10%;">Largeur<br>(cm)</th>
+                    <th style="width: 10%;">Hauteur<br>(cm)</th>
                     <th style="width: 8%;">Épaisseur</th>
                     <th style="width: 8%;">Surface<br>(m²)</th>
                     <th style="width: 8%;">Qté</th>
-                    <th style="width: 20%;">Surface Total</th>
-                    <th style="width: 10%;">Prix unit.</th>
-                    <th style="width: 10%;">Total</th>
+                    <th style="width: 10%;">Surface Total</th>
+                    <th style="width: 13%;">Prix unit.</th>
+                    <th style="width: 13%;">Total</th>
                 </tr>
             </thead>
             <tbody>

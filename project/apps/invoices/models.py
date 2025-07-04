@@ -169,7 +169,7 @@ class Payment(models.Model):
     ]
     
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, verbose_name="Facture")
-    payment_date = models.DateField(verbose_name="Date de paiement")
+    payment_date = models.DateField(verbose_name="Date de paiement", auto_now_add=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Montant")
     payment_method = models.CharField(max_length=10, choices=Invoice.PAYMENT_METHODS, verbose_name="Mode de paiement")
     reference = models.CharField(max_length=50, blank=True, verbose_name="Référence")
