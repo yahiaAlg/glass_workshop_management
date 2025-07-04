@@ -73,14 +73,14 @@ class GlassProduct(models.Model):
     
     code = models.CharField(max_length=20, unique=True, verbose_name="Code produit")
     name = models.CharField(max_length=200, verbose_name="Nom du produit")
-    description = models.TextField(blank=True, verbose_name="Description")
+    description = models.TextField(blank=True, verbose_name="Description", null=True)
     
     # Foreign key relationships to dynamic models
-    glass_type = models.ForeignKey(GlassType, on_delete=models.PROTECT, verbose_name="Type de verre")
-    thickness = models.ForeignKey(GlassThickness, on_delete=models.PROTECT, verbose_name="Épaisseur")
-    color = models.ForeignKey(GlassColor, on_delete=models.PROTECT, verbose_name="Couleur")
-    finish = models.ForeignKey(GlassFinish, on_delete=models.PROTECT, verbose_name="Finition")
-    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, verbose_name="Unité de mesure")
+    glass_type = models.ForeignKey(GlassType, on_delete=models.PROTECT, verbose_name="Type de verre", null=True,blank=True)
+    thickness = models.ForeignKey(GlassThickness, on_delete=models.PROTECT, verbose_name="Épaisseur", null=True,blank=True)
+    color = models.ForeignKey(GlassColor, on_delete=models.PROTECT, verbose_name="Couleur", null=True,blank=True)
+    finish = models.ForeignKey(GlassFinish, on_delete=models.PROTECT, verbose_name="Finition", null=True,blank=True)
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, verbose_name="Unité de mesure", null=True,blank=True)
     
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix de revient")
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix de vente")

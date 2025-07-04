@@ -283,11 +283,12 @@ def invoice_detail(request, pk):
 def invoice_print(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
     tva_rate = Company.objects.first().tax_rate
-    
+    company  = Company.objects.first()
     items = invoice.invoiceitem_set.all()
     services = invoice.invoiceservice_set.all()
     return render(request, 'invoices/print.html', {
         'invoice': invoice, 
+        'company': company,
         'tva_rate': tva_rate,
         'items': items, 
         'services': services

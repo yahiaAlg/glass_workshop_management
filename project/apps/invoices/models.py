@@ -27,7 +27,7 @@ class Invoice(models.Model):
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Commande")
     
     invoice_date = models.DateField(auto_now_add=True, verbose_name="Date de facture")
-    due_date = models.DateField(verbose_name="Date d'échéance")
+    due_date = models.DateField(null=True, blank=True,verbose_name="Date d'échéance")
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHODS, default='cash', verbose_name="Mode de paiement")
     
     delivery_address = models.TextField(blank=True, verbose_name="Adresse de livraison")
@@ -120,6 +120,11 @@ class InvoiceItem(models.Model):
     def surface(self):
         if self.width and self.height:
             return (self.width * self.height) / 10000
+        return None
+    @property
+    def surface_total(self):
+        if self.width and self.height and self.quantity:
+            return (self.width * self.height * self.quantity) / 10000
         return None
     # add surface property end
     def __str__(self):
