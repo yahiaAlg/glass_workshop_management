@@ -401,7 +401,10 @@
         <!-- Footer -->
         <div class="footer">
             <p><strong>Merci pour votre confiance !</strong></p>
-            <p>Paiement dû dans les 14 jours. Mode de paiement: {{ invoice.get_payment_method_display }}</p>
+            <p>dates de travaille : {{ company.operating_hours }}</p>
+            {% if invoice.due_date %}
+                <p>Paiement dû en  {{ invoice.due_date }}. Mode de paiement: {{ invoice.get_payment_method_display }}</p>
+            {% endif %}
             <hr style="margin: 10px 0;">
             {% if company.nif and company.rc %}
                 <p>{{company.name}} | RC: {{company.rc}} | NIF: {{company.nif}}</p>
